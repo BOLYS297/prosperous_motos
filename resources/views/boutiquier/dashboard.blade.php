@@ -1,0 +1,337 @@
+@extends('layouts.boutiquier')
+
+@section('content')
+<div class="space-y-8">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-primary mb-2 tracking-tight">Point de Vente</h2>
+        <p class="text-black">Boutique : <span class="font-bold">{{ $boutique ? $boutique->nom : 'Aucune boutique assignée' }}</span> — {{ now()->translatedFormat('l d F Y') }}</p>
+    </div>
+
+    @if(isset($notifications) && $notifications->isNotEmpty())
+        <div class="mb-6 glass-panel rounded-2xl p-6 bg-orange-50 border border-orange-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Notifications importantes</h3>
+                    <p class="text-sm text-slate-600">Vous avez des actions à prendre suite à une dépense enregistrée par l'administrateur.</p>
+                </div>
+                <span class="inline-flex items-center rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-xs font-semibold">{{ $notifications->count() }} non lue(s)</span>
+            </div>
+            <div class="space-y-4">
+                @foreach($notifications as $notification)
+                    <div class="p-4 rounded-2xl bg-white border border-orange-100">
+                        <p class="text-sm text-slate-700">{{ $notification->data['message'] }}</p>
+                        <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+                            <span>{{ $notification->created_at->diffForHumans() }}</span>
+                            <a href="{{ route('boutiquier.depenses.create') }}" class="text-blue-600 hover:text-blue-800 font-bold">Enregistrer une dépense</a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center animate-pulse">
+            <i class="ri-checkbox-circle-line text-lg mr-2"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center">
+            <i class="ri-error-warning-line text-lg mr-2"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+            <div class="flex items-center mb-2">
+                <i class="ri-error-warning-fill text-lg mr-2"></i>
+                <span class="font-bold">Erreur de validation :</span>
+            </div>
+            <ul class="list-disc pl-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="glass-panel p-6 rounded-2xl flex items-center hover:bg-white/80 transition-colors">
+            <div class="p-4 bg-blue-100 text-blue-600 rounded-xl mr-4 shadow-sm border border-blue-200">
+                <i class="ri-shopping-bag-line text-3xl"></i>
+            </div>
+            <div>
+                <div class="text-sm font-medium text-slate-500 mb-1">Ventes Aujourd'hui</div>
+                <div class="text-3xl font-black text-slate-800">{{ $nbVentesJour }}</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl flex items-center hover:bg-white/80 transition-colors">
+            <div class="p-4 bg-emerald-100 text-emerald-600 rounded-xl mr-4 shadow-sm border border-emerald-200">
+                <i class="ri-money-dollar-circle-line text-2xl"></i>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Recettes du Jour</div>
+                <div class="text-2xl font-black text-slate-800">{{ number_format($ventesAujourdhui, 0, ',', ' ') }} <span class="text-sm font-medium text-slate-500">FCFA</span></div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl flex items-center hover:bg-white/80 transition-colors">
+            <div class="p-4 bg-rose-100 text-rose-600 rounded-xl mr-4 shadow-sm border border-rose-200">
+                <i class="ri-money-cny-box-line text-2xl"></i>
+            </div>
+            <div>
+                <div class="text-sm font-medium text-slate-500 mb-1">Dettes à recouvrer</div>
+                <div class="text-2xl font-black text-slate-800">{{ number_format($dettesRestantes ?? 0, 0, ',', ' ') }} FCFA</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+            <i class="ri-file-list-line mr-2 text-orange-500"></i> Enregistrer une opération
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="{{ route('boutiquier.depenses.create') }}" class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 transition-all duration-200 shadow-sm hover:shadow-md border border-orange-200/50">
+                <div class="flex items-center mb-3">
+                    <div class="p-3 bg-orange-100 text-orange-600 rounded-xl mr-4">
+                        <i class="ri-alert-line text-xl"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-800">Déclarer une Perte</h4>
+                </div>
+                <p class="text-sm text-slate-600">Signaler un produit endommagé, cassé ou perdu du stock de votre boutique.</p>
+            </a>
+            <div class="h-10"></div>
+            <a href="{{ route('boutiquier.depenses.create') }}" class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 transition-all duration-200 shadow-sm hover:shadow-md border border-violet-200/50">
+                <div class="flex items-center mb-3">
+                    <div class="p-3 bg-violet-100 text-violet-600 rounded-xl mr-4">
+                        <i class="ri-money-dollar-circle-line text-xl"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-800">Ajouter une Dépense</h4>
+                </div>
+                <p class="text-sm text-slate-600">Enregistrer une dépense (frais de transport, entretien, fournitures...) pour votre boutique.</p>
+            </a>
+        </div>
+    </div>
+
+    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+        <i class="ri-grid-line mr-2 text-blue-500"></i> Saisir une vente directement depuis la liste des produits
+    </h3>
+
+    <div class="mb-8">
+        <div class="glass-panel rounded-2xl p-6 bg-white shadow-sm">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-slate-600">Vente pour</p>
+                    <div class="flex gap-x-10 ">
+                        <label class="inline-flex items-center gap-2 text-slate-700">
+                            <input type="radio" name="sale_type" value="client" checked class="text-blue-600 focus:ring-blue-500">
+                            Client
+                        </label>
+                        <div class="w-10"></div>
+                        <label class="inline-flex items-center gap-2 text-slate-700">
+                            <input type="radio" name="sale_type" value="grossiste" class="text-blue-600 focus:ring-blue-500">
+                            Grossiste
+                        </label>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2" id="grossiste-select-container" style="display: none;">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Sélectionner un grossiste</label>
+                    <select id="grossiste-select" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">-- Sélectionner un grossiste --</option>
+                        @foreach($grossistes as $grossiste)
+                            <option value="{{ $grossiste->id }}">{{ $grossiste->nom }} ({{ $grossiste->code }})</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-slate-500 mt-2">Utilisez ce code du grossiste pour vérifier son identité avant d'enregistrer la vente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        @forelse($produits as $produit)
+            @php
+                $stock = $produit->stocks->first();
+                $enStock = $stock && $stock->quantite > 0;
+            @endphp
+            <form method="POST" action="{{ route('boutiquier.ventes.store') }}" data-produit-id="{{ $produit->id }}" data-client-price="{{ $produit->prix_vente ?? 0 }}" data-in-stock="{{ $enStock ? 1 : 0 }}" class="product-card glass-panel rounded-2xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-lg {{ $enStock ? 'cursor-default' : 'opacity-50 cursor-not-allowed' }}">
+                @csrf
+                <input type="hidden" name="produit_id" value="{{ $produit->id }}">
+                <input type="hidden" name="is_grossiste" class="is-grossiste-input" value="0">
+                <input type="hidden" name="grossiste_id" class="grossiste-id-input" value="">
+
+                <div class="flex-1">
+                    @if($produit->image)
+                        <img src="{{ asset('storage/' . $produit->image) }}" alt="{{ $produit->nom }}" class="object-cover rounded-2xl mb-4 w-50 h-40" style="max-height: 12rem;">
+                    @else
+                        <div class="bg-slate-100 rounded-2xl mb-4 h-40 flex items-center justify-center text-slate-400 border border-slate-200">
+                            <i class="ri-image-line text-4xl"></i>
+                        </div>
+                    @endif
+
+                    <div class="mb-4">
+                        <h4 class="text-base font-bold text-slate-800 truncate">{{ $produit->nom }}</h4>
+                        <p class="text-blue-600 font-black text-xl mt-2"> <span class="product-price-label">{{ number_format($produit->prix_vente, 0, ',', ' ') }}</span> FCFA</p>
+                        <p class="text-xs text-slate-500 mt-1">{{ $enStock ? 'En stock' : 'Rupture de stock' }}{{ $enStock ? ' • Qté: ' . $stock->quantite : '' }}</p>
+                    </div>
+
+                    <div class="mb-4 p-4 rounded-2xl border border-slate-200 bg-slate-50">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Quantité vendue</label>
+                        <div class="flex items-center gap-2">
+                            <button type="button" data-action="decrease" data-target="qty-{{ $produit->id }}" class="w-11 h-11 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center text-xl font-bold text-slate-700 transition-colors" {{ $enStock ? '' : 'disabled' }}>
+                                <i class="ri-subtract-line"></i>
+                            </button>
+                            <input id="qty-{{ $produit->id }}" type="number" name="quantite" value="1" min="1" max="{{ $stock?->quantite ?? 1 }}" class="qty-input w-20 text-center text-2xl font-black px-3 py-2 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" {{ $enStock ? '' : 'disabled' }}>
+                            <button type="button" data-action="increase" data-target="qty-{{ $produit->id }}" class="w-11 h-11 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center text-xl font-bold text-slate-700 transition-colors" {{ $enStock ? '' : 'disabled' }}>
+                                <i class="ri-add-line"></i>
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-slate-500 mt-3">Total : <span class="font-bold text-slate-900 total-price">{{ number_format($produit->prix_vente, 0, ',', ' ') }}</span> FCFA</p>
+                        <p class="grossiste-note text-sm text-rose-600 mt-2 hidden"></p>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-sale-button w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" {{ $enStock ? '' : 'disabled' }}>
+                    <i class="ri-check-double-line mr-2 text-xl"></i> Enregistrer la vente
+                </button>
+            </form>
+        @empty
+            <div class="col-span-full glass-panel rounded-2xl p-12 text-center text-slate-500">
+                <i class="ri-shopping-bag-line text-5xl mb-3"></i>
+                <p>Aucun produit n'est encore enregistré dans votre boutique.</p>
+            </div>
+        @endforelse
+    </div>
+</div>
+@php
+    $grossistesJson = [];
+    foreach ($grossistes as $grossiste) {
+        $grossistesJson[] = [
+            'id' => $grossiste->id,
+            'nom' => $grossiste->nom,
+            'code' => $grossiste->code,
+            'prix' => $grossiste->prixProduits->pluck('prix_vente', 'produit_id'),
+        ];
+    }
+@endphp
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const grossistes = @json($grossistesJson);
+
+        const saleTypeInputs = document.querySelectorAll('input[name="sale_type"]');
+        const grossisteSelect = document.getElementById('grossiste-select');
+        const grossisteContainer = document.getElementById('grossiste-select-container');
+        const productCards = document.querySelectorAll('.product-card');
+
+        function getSaleType() {
+            return document.querySelector('input[name="sale_type"]:checked')?.value || 'client';
+        }
+
+        function getSelectedGrossisteId() {
+            return grossisteSelect ? grossisteSelect.value : '';
+        }
+
+        function findGrossiste(id) {
+            return grossistes.find(g => String(g.id) === String(id));
+        }
+
+        function updateCard(card) {
+            const productId = card.dataset.produitId;
+            const quantityInput = card.querySelector('.qty-input');
+            const isGrossisteInput = card.querySelector('.is-grossiste-input');
+            const grossisteIdInput = card.querySelector('.grossiste-id-input');
+            const priceLabel = card.querySelector('.product-price-label');
+            const totalPrice = card.querySelector('.total-price');
+            const grossisteNote = card.querySelector('.grossiste-note');
+            const submitBtn = card.querySelector('.submit-sale-button');
+            let unitPrice = parseFloat(card.dataset.clientPrice) || 0;
+            const saleType = getSaleType();
+            const quantity = parseInt(quantityInput.value, 10) || 1;
+            const selectedGrossisteId = getSelectedGrossisteId();
+
+            if (saleType === 'grossiste') {
+                const grossiste = findGrossiste(selectedGrossisteId);
+                if (!grossiste) {
+                    submitBtn.disabled = true;
+                    grossisteNote.textContent = 'Sélectionnez un grossiste pour utiliser le tarif grossiste.';
+                    grossisteNote.classList.remove('hidden');
+                    grossisteNote.classList.add('text-rose-600');
+                } else if (grossiste.prix[productId] === undefined) {
+                    unitPrice = 0;
+                    submitBtn.disabled = true;
+                    grossisteNote.textContent = 'Aucun prix grossiste défini pour ce produit.';
+                    grossisteNote.classList.remove('hidden');
+                    grossisteNote.classList.add('text-rose-600');
+                } else {
+                    unitPrice = parseFloat(grossiste.prix[productId]);
+                    submitBtn.disabled = false;
+                    grossisteNote.textContent = 'Prix grossiste : ' + grossiste.nom + ' (' + grossiste.code + ')';
+                    grossisteNote.classList.remove('hidden');
+                    grossisteNote.classList.remove('text-rose-600');
+                    grossisteNote.classList.add('text-slate-500');
+                }
+            } else {
+                submitBtn.disabled = !(card.dataset.inStock === '1');
+                grossisteNote.classList.add('hidden');
+            }
+
+            isGrossisteInput.value = saleType === 'grossiste' ? '1' : '0';
+            grossisteIdInput.value = saleType === 'grossiste' ? selectedGrossisteId : '';
+            priceLabel.textContent = new Intl.NumberFormat('fr-FR').format(unitPrice);
+            totalPrice.textContent = new Intl.NumberFormat('fr-FR').format(unitPrice * quantity);
+        }
+
+        function updateAllCards() {
+            const saleType = getSaleType();
+            if (grossisteContainer) {
+                grossisteContainer.style.display = saleType === 'grossiste' ? 'block' : 'none';
+            }
+            productCards.forEach(updateCard);
+        }
+
+        saleTypeInputs.forEach(input => input.addEventListener('change', updateAllCards));
+        if (grossisteSelect) {
+            grossisteSelect.addEventListener('change', updateAllCards);
+        }
+
+        productCards.forEach(card => {
+            const quantityInput = card.querySelector('.qty-input');
+            quantityInput.addEventListener('input', () => updateCard(card));
+
+            const decreaseButton = card.querySelector('[data-action="decrease"]');
+            const increaseButton = card.querySelector('[data-action="increase"]');
+
+            const updateQuantity = (delta) => {
+                let currentValue = parseInt(quantityInput.value, 10) || 1;
+                const min = parseInt(quantityInput.getAttribute('min'), 10) || 1;
+                const max = parseInt(quantityInput.getAttribute('max'), 10) || currentValue;
+                currentValue = Math.min(Math.max(currentValue + delta, min), max);
+                quantityInput.value = currentValue;
+                updateCard(card);
+            };
+
+            if (decreaseButton) {
+                decreaseButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    updateQuantity(-1);
+                });
+            }
+
+            if (increaseButton) {
+                increaseButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    updateQuantity(1);
+                });
+            }
+        });
+
+        updateAllCards();
+    });
+</script>
+@endsection
