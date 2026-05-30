@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class AchatDepenseNotification extends Notification
 {
@@ -19,27 +19,22 @@ class AchatDepenseNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database', 'mail'];
     }
 
     public function toDatabase($notifiable)
     {
-        $intitule = "Dépense pour Achat #{$this->achatId} (produits)";
-        $actionUrl = route('boutiquier.depenses.create') . '?intitule=' . urlencode($intitule) . '&montant=' . urlencode($this->montant) . '&achat_id=' . urlencode($this->achatId);
-
         return [
-            'message' => "L'administrateur $this->adminNom a proposé un paiement de " . number_format($this->montant, 0, ',', ' ') . " FCFA pour votre boutique '{$this->boutiqueNom}' (Achat #{$this->achatId}). Merci d'enregistrer cette somme en dépense pour validation.",
-            'boutique' => $this->boutiqueNom,
+            'message' => "Un montant de " . number_format($this->montant, 0, ',', ' ') . " FCFA a été imputé de votre solde pour une dépense admin.",
             'montant' => $this->montant,
-            'achat_id' => $this->achatId,
-            'admin' => $this->adminNom,
-            'prefill' => [
-                'intitule' => $intitule,
-                'montant' => $this->montant,
-                'achat_id' => $this->achatId,
-            ],
-            'action_url' => $actionUrl,
         ];
+    }
+
+    public function toMail($notifiable)
+    {
+        return (new MailMessage)
+            ->subject('Dépense administrative')
+            ->line("Un montant de " . number_format($this->montant, 0, ',', ' ') . " FCFA a été imputé de votre solde pour une dépense admin.");
     }
 
     public function toArray($notifiable)

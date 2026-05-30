@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\AdminValidationNotification;
 
 class DepenseController extends Controller
 {
@@ -44,6 +46,13 @@ class DepenseController extends Controller
                 ]);
             });
 
+            $this->notifyAdminsForValidation(
+                'Nouvelle perte à valider',
+                "Une perte de {$request->quantite} unité(s) a été soumise par le boutiquier {$request->user()->nom_utilisateur}.",
+                'Voir les pertes',
+                route('admin.rapports.index')
+            );
+
             return redirect()->route('boutiquier.dashboard')->with('success', 'Perte soumise pour validation admin. Elle sera enregistrée définitivement après validation.');
         } else {
             // Dépense normale : en attente de validation admin
@@ -73,8 +82,30 @@ class DepenseController extends Controller
                 \App\Models\Depense::create($data);
             });
 
+            $this->notifyAdminsForValidation(
+                'Nouvelle dépense à valider',
+                "Une dépense de " . number_format($request->montant, 0, ',', ' ') . " FCFA a été soumise par le boutiquier {$request->user()->nom_utilisateur}.",
+                'Voir les dépenses',
+                route('admin.rapports.index')
+            );
+
             return redirect()->route('boutiquier.dashboard')->with('success', 'Dépense soumise pour validation admin. Elle sera enregistrée définitivement après validation.');
         }
+    }
+
+    protected function notifyAdminsForValidation(string $title, string $message, string $actionLabel, string $actionUrl)
+    {
+        $admins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        Notification::send($admins, new AdminValidationNotification(
+            $title,
+            $message,
+            $actionLabel,
+            $actionUrl
+        ));
     }
 
     private function storeWebcamPhoto(?string $photoData)

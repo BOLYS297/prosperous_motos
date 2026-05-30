@@ -24,6 +24,7 @@
                             'confirmee_par_magasinier' => ['label' => 'Confirmée par magasinier', 'class' => 'bg-blue-100 text-blue-800'],
                             'anomalie' => ['label' => 'Anomalie signalée', 'class' => 'bg-rose-100 text-rose-800'],
                             'approuvee' => ['label' => 'Approuvée', 'class' => 'bg-emerald-100 text-emerald-800'],
+                            'approuvee_avec_perte' => ['label' => 'Approuvée avec perte', 'class' => 'bg-rose-100 text-rose-800'],
                             'rejetee' => ['label' => 'Rejetée', 'class' => 'bg-amber-100 text-amber-800'],
                             'confirmee' => ['label' => 'Confirmée', 'class' => 'bg-blue-100 text-blue-800'],
                         ];
@@ -56,6 +57,18 @@
                             <p class="font-semibold text-rose-900">Problème signalé par le magasinier</p>
                             <p class="text-sm text-rose-700 mt-2">
                                 <strong>Message :</strong> {{ $recharge->message_probleme ?? 'Aucun message fourni' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @elseif($recharge->statut === 'approuvee' && $recharge->lignes->sum('quantite_manquante') > 0)
+                <div class="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="ri-hand-coin-line text-2xl text-rose-600 mr-3 mt-0.5"></i>
+                        <div>
+                            <p class="font-semibold text-rose-900">Perte fournisseur reconnue</p>
+                            <p class="text-sm text-rose-700 mt-2">
+                                Le fournisseur <strong>{{ $recharge->fournisseur?->nom ?? 'N/A' }}</strong> doit à l'entreprise <strong>{{ $recharge->lignes->sum('quantite_manquante') }}</strong> pièce(s) perdues.
                             </p>
                         </div>
                     </div>
@@ -138,34 +151,39 @@
                 </button>
             </form>
 
-            <!-- Rejeter -->
-            <div x-data="{ showRejectForm: false }" class="space-y-3">
-                <button @click="showRejectForm = !showRejectForm" type="button" class="w-full px-6 py-3 bg-linear-to-r from-rose-600 to-red-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center">
-                    <i class="ri-close-circle-line mr-2 text-xl"></i> Rejeter
-                </button>
-
-                <form x-show="showRejectForm" action="{{ route('admin.recharges.validation.rejeter', $recharge) }}" method="POST" class="glass-panel p-4 rounded-lg space-y-3" @submit="showRejectForm = false">
-                    @csrf
-                    <label class="block">
-                        <span class="text-sm font-semibold text-slate-700 mb-2 block">Raison du rejet <span class="text-red-500">*</span></span>
-                        <textarea name="raison_rejet" required class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white/50 focus:ring-2 focus:ring-rose-500 outline-none" rows="4" placeholder="Décrivez la raison du rejet..."></textarea>
-                    </label>
-                    <button type="submit" class="w-full px-4 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition-colors">
-                        Confirmer rejet
+            @if($recharge->statut !== 'confirmee_par_magasinier')
+                <!-- Rejeter -->
+                <div x-data="{ showRejectForm: false }" class="space-y-3">
+                    <button @click="showRejectForm = !showRejectForm" type="button" class="w-full px-6 py-3 bg-linear-to-r from-rose-600 to-red-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center">
+                        <i class="ri-close-circle-line mr-2 text-xl"></i> Rejeter
                     </button>
-                    <button type="button" @click="showRejectForm = false" class="w-full px-4 py-2 bg-slate-300 text-slate-800 rounded-lg font-medium hover:bg-slate-400 transition-colors">
-                        Annuler
-                    </button>
-                </form>
-            </div>
 
-            <!-- Informations supplémentaires -->
-            <div class="glass-panel p-4 rounded-lg mt-6">
-                <h4 class="font-semibold text-slate-700 mb-2">Note</h4>
-                <p class="text-sm text-slate-600">
-                    Cliquez sur <strong>Approuver (OK)</strong> pour mettre à jour le stock du magasin, ou <strong>Rejeter</strong> si la recharge ne peut pas être complétée.
-                </p>
-            </div>
+                    <form x-show="showRejectForm" action="{{ route('admin.recharges.validation.rejeter', $recharge) }}" method="POST" class="glass-panel p-4 rounded-lg space-y-3" @submit="showRejectForm = false">
+                        @csrf
+                        <button type="submit" class="w-full px-4 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition-colors">
+                            Confirmer rejet
+                        </button>
+                        <button type="button" @click="showRejectForm = false" class="w-full px-4 py-2 bg-slate-300 text-slate-800 rounded-lg font-medium hover:bg-slate-400 transition-colors">
+                            Annuler
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Informations supplémentaires -->
+                <div class="glass-panel p-4 rounded-lg mt-6">
+                    <h4 class="font-semibold text-slate-700 mb-2">Note</h4>
+                    <p class="text-sm text-slate-600">
+                        Si la recharge est une anomalie, <strong>Approuver (OK)</strong> enregistre le stock réellement reçu par le magasin et conserve la dette fournisseur égale à <strong>quantité attendue - quantité reçue</strong>. <strong>Rejeter</strong> permet de refuser l’anomalie sans saisir de motif.
+                    </p>
+                </div>
+            @else
+                <div class="glass-panel p-4 rounded-lg mt-6">
+                    <h4 class="font-semibold text-slate-700 mb-2">Note</h4>
+                    <p class="text-sm text-slate-600">
+                        Cette recharge a été confirmée par le magasinier. L'administrateur peut seulement consulter les détails et approuver pour enregistrer le stock reçu.
+                    </p>
+                </div>
+            @endif
         </div>
     </div>
 </div>

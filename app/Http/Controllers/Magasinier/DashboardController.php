@@ -24,7 +24,10 @@ class DashboardController extends Controller
 
         $totalProduits = \App\Models\Stock::where('boutique_id', $boutique->id)->count();
         $ruptures = \App\Models\Stock::where('boutique_id', $boutique->id)->where('quantite', '<=', 0)->count();
-        $pertesMois = \App\Models\Perte::where('boutique_id', $boutique->id)->whereMonth('created_at', now()->month)->count();
+        $pertesMois = \App\Models\Perte::where('boutique_id', $boutique->id)
+            ->where('statut', 'approved')
+            ->whereMonth('created_at', now()->month)
+            ->count();
 
         $recharges = \App\Models\Recharge::with(['fournisseur', 'lignes.produit'])
             ->where('destination_id', $boutique->id)

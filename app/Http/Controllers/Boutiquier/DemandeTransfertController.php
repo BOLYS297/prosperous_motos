@@ -7,8 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\DemandeTransfert;
 use App\Models\Produit;
 use App\Models\Stock;
+use App\Models\User;
+use App\Notifications\AdminValidationNotification;
+use App\Notifications\StockRequestNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class DemandeTransfertController extends Controller
 {
@@ -36,12 +40,27 @@ class DemandeTransfertController extends Controller
             'quantite_demandee' => 'required|integer|min:1',
         ]);
 
-        DemandeTransfert::create([
+        $demande = DemandeTransfert::create([
             'boutique_id' => Auth::user()->boutique_id,
             'produit_id' => $request->produit_id,
             'quantite_demandee' => $request->quantite_demandee,
             'statut' => 'en_attente',
         ]);
+
+        $demande->load(['produit', 'boutique']);
+
+        $magasiniers = User::where('role', 'magasinier')
+            ->whereNotNull('email')
+            ->get();
+
+        if ($magasiniers->isNotEmpty()) {
+            Notification::send($magasiniers, new StockRequestNotification(
+                $demande->produit->nom,
+                $demande->quantite_demandee,
+                $demande->boutique->nom,
+                route('magasinier.transferts.index')
+            ));
+        }
 
         return redirect()->route('boutiquier.transferts.index')->with('success', 'Demande de stock envoyée au magasin central.');
     }
@@ -72,6 +91,7 @@ class DemandeTransfertController extends Controller
     public function signalerProbleme(Request $request, $id)
     {
         $request->validate([
+            'quantite_recue' => 'required|integer|min:0',
             'note_probleme' => 'required|string|max:500',
         ]);
 
@@ -81,11 +101,42 @@ class DemandeTransfertController extends Controller
             return back()->with('error', 'Vous ne pouvez signaler un problème que sur une demande expédiée.');
         }
 
-        $demande->update([
-            'statut' => 'probleme',
-            'note_probleme' => $request->note_probleme,
-        ]);
+        if ($request->quantite_recue > $demande->quantite_expediee) {
+            return back()->with('error', 'La quantité reçue ne peut pas être supérieure à la quantité expédiée.');
+        }
 
-        return back()->with('success', 'Problème signalé au magasin central.');
+        $quantiteRecue = $request->quantite_recue;
+        $quantiteManquante = $demande->quantite_expediee - $quantiteRecue;
+
+        DB::transaction(function () use ($demande, $quantiteRecue, $request) {
+            $demande->update([
+                'statut' => 'probleme',
+                'note_probleme' => $request->note_probleme,
+                'quantite_recue' => $quantiteRecue,
+            ]);
+
+            $stock = Stock::firstOrCreate(
+                ['boutique_id' => $demande->boutique_id, 'produit_id' => $demande->produit_id],
+                ['quantite' => 0]
+            );
+            $stock->increment('quantite', $quantiteRecue);
+        });
+
+        $demande->load(['produit', 'boutique']);
+
+        $admins = User::whereIn('role', ['admin', 'super_admin'])
+            ->whereNotNull('email')
+            ->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new AdminValidationNotification(
+                'Problème sur une livraison de transfert',
+                "La boutique {$demande->boutique->nom} a reçu {$quantiteRecue} unité(s) sur {$demande->quantite_expediee} de {$demande->produit->nom}. Manquant : {$quantiteManquante} unité(s). Message : {$request->note_probleme}",
+                'Voir le tableau de bord',
+                route('admin.dashboard')
+            ));
+        }
+
+        return back()->with('success', 'Problème signalé au magasin central et stock reçu enregistré.');
     }
 }

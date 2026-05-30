@@ -30,11 +30,20 @@ class Achat extends Model
 
     public function getMontantPayeAttribute()
     {
+        if ($this->relationLoaded('paiements')) {
+            return $this->paiements->sum('montant');
+        }
+
         return $this->paiements()->sum('montant');
     }
 
     public function getResteAPayerAttribute()
     {
         return max(0, $this->montant_total - $this->montant_paye);
+    }
+
+    public function recharge()
+    {
+        return $this->hasOne(Recharge::class);
     }
 }

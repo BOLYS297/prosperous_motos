@@ -22,6 +22,8 @@ class LogActivite extends Model
         }
 
         return match (true) {
+            str_contains($action, 'connexion') && $action === 'connexion' => 'Connexion',
+            str_contains($action, 'deconnexion') && $action === 'deconnexion' => 'Déconnexion',
             str_contains($action, 'admin.rapports.depenses.approve') => 'Validation de dépense',
             str_contains($action, 'admin.rapports.depenses.reject') => 'Rejet de dépense',
             str_contains($action, 'admin.rapports.pertes.approve') => 'Validation de perte',

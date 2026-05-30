@@ -27,9 +27,9 @@ class CheckShiftTime
                     return redirect()->route('login')->withErrors(['email' => 'Vous ne pouvez vous connecter qu\'entre 7h et 17h.']);
                 }
             } elseif ($user->shift === 'soir') {
-                if ($currentHour < 17 || $currentHour >= 23) {
+                if ($currentHour < 17 || $currentHour >= 22) {
                     Auth::logout();
-                    return redirect()->route('login')->withErrors(['email' => 'Vous ne pouvez vous connecter qu\'entre 17h et 23h.']);
+                    return redirect()->route('login')->withErrors(['email' => 'Vous ne pouvez vous connecter qu\'entre 17h et 22h.']);
                 }
             }
         }

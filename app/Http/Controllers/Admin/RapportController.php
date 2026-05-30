@@ -9,6 +9,8 @@ use App\Models\Perte;
 use App\Models\Achat;
 use App\Models\Boutique;
 use App\Models\Stock;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\AdminValidationNotification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -107,7 +109,7 @@ class RapportController extends Controller
 
         // Ajout du BOM pour qu'Excel ouvre le CSV correctement en UTF-8
         $headers = [
-            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-type"        => "application/vnd.ms-excel; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=$filename",
             "Pragma"              => "no-cache",
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
@@ -118,11 +120,13 @@ class RapportController extends Controller
             $file = fopen('php://output', 'w');
             fputs($file, "\xEF\xBB\xBF"); // BOM UTF-8
 
-            fputcsv($file, ['Date', 'Boutique', 'Montant (FCFA)', 'Statut'], ';');
+            fputcsv($file, ['Date d\'enregistrement', 'Boutique', 'Montant (FCFA)', 'Statut'], ';');
 
             foreach ($ventes as $vente) {
+                $date = $vente->created_at ? $vente->created_at->format('d/m/Y H:i:s') : 'N/A';
+
                 fputcsv($file, [
-                    $vente->created_at->format('d/m/Y H:i'),
+                    $date,
                     $vente->boutique->nom ?? 'Inconnue',
                     $vente->montant_total,
                     $vente->statut ?? 'Payée'
@@ -141,42 +145,22 @@ class RapportController extends Controller
             return back()->with('error', 'Cette dépense ne peut pas être validée.');
         }
 
-        DB::transaction(function () use ($depense) {
-            $depense->update([
-                'statut' => 'approved',
-                'admin_id' => Auth::id(),
-                'validated_at' => now(),
-            ]);
+        // Dispatcher le job en background (asynchrone via queue)
+        \App\Jobs\ApproveDepense::dispatch($depense, Auth::id());
 
-            if ($depense->boutique_id) {
-                $boutique = Boutique::find($depense->boutique_id);
-                if ($boutique) {
-                    $boutique->decrement('solde', $depense->montant);
-                }
-            }
-        });
-
-        return back()->with('success', 'Dépense validée avec succès.');
+        return back()->with('success', 'Dépense en cours de validation. Vous serez notifié une fois traitée.');
     }
 
-    public function rejectDepense(Request $request, Depense $depense)
+    public function rejectDepense(Depense $depense)
     {
-        $request->validate([
-            'rejet_reason' => 'required|string|min:5',
-        ]);
-
         if ($depense->statut !== 'pending') {
             return back()->with('error', 'Cette dépense ne peut pas être rejetée.');
         }
 
-        $depense->update([
-            'statut' => 'rejected',
-            'admin_id' => Auth::id(),
-            'rejet_reason' => $request->rejet_reason,
-            'validated_at' => now(),
-        ]);
+        // Dispatcher le job en background (asynchrone via queue)
+        \App\Jobs\RejectDepense::dispatch($depense, Auth::id());
 
-        return back()->with('success', 'Dépense rejetée avec succès.');
+        return back()->with('success', 'Dépense en cours de rejet. Vous serez notifié une fois traitée.');
     }
 
     public function approvePerte(Perte $perte)
@@ -193,35 +177,21 @@ class RapportController extends Controller
             return back()->with('error', 'Stock insuffisant pour valider cette perte.');
         }
 
-        DB::transaction(function () use ($perte, $stock) {
-            $stock->decrement('quantite', $perte->quantite);
-            $perte->update([
-                'statut' => 'approved',
-                'admin_id' => Auth::id(),
-                'validated_at' => now(),
-            ]);
-        });
+        // Dispatcher le job en background (asynchrone via queue)
+        \App\Jobs\ApprovePerte::dispatch($perte, Auth::id());
 
-        return back()->with('success', 'Perte validée avec succès.');
+        return back()->with('success', 'Perte en cours de validation. Vous serez notifié une fois traitée.');
     }
 
-    public function rejectPerte(Request $request, Perte $perte)
+    public function rejectPerte(Perte $perte)
     {
-        $request->validate([
-            'rejet_reason' => 'required|string|min:5',
-        ]);
-
         if ($perte->statut !== 'pending') {
             return back()->with('error', 'Cette perte ne peut pas être rejetée.');
         }
 
-        $perte->update([
-            'statut' => 'rejected',
-            'admin_id' => Auth::id(),
-            'rejet_reason' => $request->rejet_reason,
-            'validated_at' => now(),
-        ]);
+        // Dispatcher le job en background (asynchrone via queue)
+        \App\Jobs\RejectPerte::dispatch($perte, Auth::id());
 
-        return back()->with('success', 'Perte rejetée avec succès.');
+        return back()->with('success', 'Perte en cours de rejet. Vous serez notifié une fois traitée.');
     }
 }

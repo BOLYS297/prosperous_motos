@@ -49,7 +49,8 @@
                     </div>
                     <div class="w-48">
                         <label class="block text-xs text-slate-500">Qté reçue</label>
-                        <input type="number" name="lignes[{{ $loop->index }}][quantite_recue]" value="{{ $ligne->quantite_recue }}" min="0" class="w-full px-2 py-1 border rounded">
+                        <input type="hidden" name="lignes[{{ $loop->index }}][quantite_recue]" value="{{ $ligne->quantite_envoyee }}">
+                        <input type="number" value="{{ $ligne->quantite_envoyee }}" min="{{ $ligne->quantite_envoyee }}" max="{{ $ligne->quantite_envoyee }}" class="w-full px-2 py-1 border rounded bg-slate-100" readonly>
                         <input type="hidden" name="lignes[{{ $loop->index }}][id]" value="{{ $ligne->id }}">
                     </div>
                 </div>
@@ -71,6 +72,22 @@
 
     <form id="probleme" action="{{ route('magasinier.recharges.probleme', $recharge) }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <div class="space-y-4 mb-4">
+            <h3 class="font-semibold text-lg">Quantités reçues</h3>
+            @foreach($recharge->lignes as $ligne)
+                <div class="p-3 border rounded flex items-center justify-between">
+                    <div>
+                        <div class="font-medium">{{ $ligne->produit->nom }}</div>
+                        <div class="text-sm text-slate-500">Qté attendue: {{ $ligne->quantite_envoyee }}</div>
+                    </div>
+                    <div class="w-48">
+                        <label class="block text-xs text-slate-500">Qté reçue</label>
+                        <input type="number" name="lignes[{{ $loop->index }}][quantite_recue]" value="{{ $ligne->quantite_recue ?? max($ligne->quantite_envoyee - 1, 0) }}" min="0" max="{{ max($ligne->quantite_envoyee - 1, 0) }}" class="w-full px-2 py-1 border rounded">
+                        <input type="hidden" name="lignes[{{ $loop->index }}][id]" value="{{ $ligne->id }}">
+                    </div>
+                </div>
+            @endforeach
+        </div>
         <div>
             <label class="block text-sm">Décrire le problème</label>
             <textarea name="message" class="w-full mt-2 p-2 border rounded" required></textarea>

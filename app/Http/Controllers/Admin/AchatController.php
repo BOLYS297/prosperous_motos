@@ -11,10 +11,28 @@ use Illuminate\Support\Facades\Notification;
 
 class AchatController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $achats = \App\Models\Achat::with(['fournisseur', 'boutique', 'lignes.produit'])->orderBy('created_at', 'desc')->get();
-        return view('admin.achats.index', compact('achats'));
+        $q = trim($request->query('q', ''));
+
+        $achats = \App\Models\Achat::with(['fournisseur', 'boutique', 'lignes.produit', 'recharge.lignes'])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($query) use ($q) {
+                    $query->where('id', 'like', "%{$q}%")
+                        ->orWhere('montant_total', 'like', "%{$q}%")
+                        ->orWhere('statut', 'like', "%{$q}%")
+                        ->orWhereHas('fournisseur', function ($query) use ($q) {
+                            $query->where('nom', 'like', "%{$q}%");
+                        })
+                        ->orWhereHas('boutique', function ($query) use ($q) {
+                            $query->where('nom', 'like', "%{$q}%");
+                        });
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.achats.index', compact('achats', 'q'));
     }
 
     public function create()
@@ -31,7 +49,7 @@ class AchatController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'fournisseur_id' => 'required|exists:fournisseurs,id',
             'boutique_id' => [
                 'required',
@@ -43,13 +61,22 @@ class AchatController extends Controller
                     }
                 },
             ],
-            'debit_boutique_id' => 'required_if:statut,paye|exists:boutiques,id',
             'statut' => 'required|in:paye,dette',
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required|exists:produits,id',
             'lignes.*.quantite' => 'required|integer|min:1',
             'lignes.*.prix_unitaire' => 'required|numeric|min:0',
-        ]);
+        ];
+
+        // Make debit_boutique_id required only when statut === 'paye'.
+        if ($request->input('statut') === 'paye') {
+            $rules['debit_boutique_id'] = 'required|exists:boutiques,id';
+        } else {
+            // For 'dette' we accept null / absence to avoid "selected is invalid" when empty string is submitted
+            $rules['debit_boutique_id'] = 'nullable';
+        }
+
+        $request->validate($rules);
 
         DB::transaction(function () use ($request) {
             $montant_total = 0;
@@ -103,6 +130,11 @@ class AchatController extends Controller
                     // Notifier le(s) boutiquier(s) présents dans la boutique choisie
                     $this->notifyBoutiquiers($debitBoutique, $montant_total, $achat);
                 }
+
+                // Notifier aussi les boutiquiers de la boutique destination
+                if ($destination) {
+                    $this->notifyBoutiquiers($destination, $montant_total, $achat);
+                }
             }
 
             // If destination is a magasin, always create a Recharge record for magasinier validation
@@ -114,6 +146,7 @@ class AchatController extends Controller
                     'montant' => $montant_total,
                     'statut' => 'en_attente',
                     'fournisseur_id' => $request->fournisseur_id,
+                    'achat_id' => $achat->id,
                 ]);
 
                 foreach ($request->lignes as $ligne) {
@@ -124,6 +157,37 @@ class AchatController extends Controller
                         'quantite_recue' => 0,
                         'quantite_manquante' => $ligne['quantite'],
                     ]);
+                }
+
+                // Notifier le(s) magasinier(s) de la boutique destination pour validation
+                try {
+                    $currentHour = (int) now()->format('H');
+                    $shift = null;
+                    if ($currentHour >= 7 && $currentHour < 17) {
+                        $shift = 'matin';
+                    } elseif ($currentHour >= 17 && $currentHour < 23) {
+                        $shift = 'soir';
+                    }
+
+                    $userQuery = \App\Models\User::where('role', 'magasinier')->where('boutique_id', $destination->id);
+                    $presentMagasiniers = $shift ? (clone $userQuery)->where('shift', $shift)->get() : collect();
+                    $magasinierRecipients = $presentMagasiniers->isNotEmpty() ? $presentMagasiniers : $userQuery->get();
+
+                    if ($magasinierRecipients->isNotEmpty()) {
+                        $title = 'Nouvelle recharge en attente';
+                        $message = "Une nouvelle recharge (Achat #{$achat->id}) est en attente de validation pour la boutique {$destination->nom}. Merci de confirmer la réception ou de signaler une anomalie.";
+                        $actionUrl = route('magasinier.recharges.show', $recharge->id);
+
+                        Notification::send($magasinierRecipients, new \App\Notifications\RechargeStatusNotification(
+                            $title,
+                            $message,
+                            'Voir la recharge',
+                            $actionUrl
+                        ));
+                    }
+                } catch (\Throwable $e) {
+                    // Ne pas faire échouer la transaction si la notification pose problème; loggons l'erreur.
+                    \Log::error('Erreur en notifiant les magasiniers pour la recharge: ' . $e->getMessage());
                 }
             }
         });
@@ -158,7 +222,7 @@ class AchatController extends Controller
 
     public function show(\App\Models\Achat $achat)
     {
-        $achat->load(['fournisseur', 'boutique', 'lignes.produit']);
+        $achat->load(['fournisseur', 'boutique', 'lignes.produit', 'recharge.lignes']);
         return view('admin.achats.show', compact('achat'));
     }
 }

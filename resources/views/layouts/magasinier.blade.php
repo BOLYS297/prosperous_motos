@@ -82,7 +82,7 @@
 
                     <a href="{{ route('magasinier.depenses.create') }}" class="nav-item flex items-center px-4 py-3 text-slate-600 rounded-lg {{ request()->routeIs('magasinier.depenses.*') ? 'active' : '' }}">
                         <i class="ri-error-warning-line text-xl mr-3"></i>
-                        <span>Déclarer Perte / Dépense</span>
+                        <span>Déclarer Perte</span>
                     </a>
 
                     <a href="{{ route('magasinier.transferts.index') }}" class="nav-item flex items-center justify-between px-4 py-3 text-slate-600 rounded-lg {{ request()->routeIs('magasinier.transferts.*') ? 'active' : '' }}">
@@ -90,27 +90,10 @@
                             <i class="ri-truck-line text-xl mr-3"></i>
                             <span>Demandes de Stock</span>
                         </div>
-                        @php
-                            $pendingRequestsCount = \App\Models\DemandeTransfert::where('statut', 'en_attente')->count();
-                        @endphp
-                        @if($pendingRequestsCount > 0)
+                        @if(!empty($pendingRequestsCount) && $pendingRequestsCount > 0)
                             <span class="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingRequestsCount }}</span>
                         @endif
                     </a>
-
-                    @php
-                        $asideRecharges = collect();
-                        $asideRechargeCount = 0;
-                        if(Auth::check() && Auth::user()->boutique) {
-                            $asideRecharges = \App\Models\Recharge::with(['lignes.produit', 'fournisseur'])
-                                ->where('destination_id', Auth::user()->boutique->id)
-                                ->where('statut', 'en_attente')
-                                ->orderBy('created_at', 'desc')
-                                ->limit(5)
-                                ->get();
-                            $asideRechargeCount = $asideRecharges->count();
-                        }
-                    @endphp
 
                     <a href="{{ route('magasinier.recharges.index') }}" class="nav-item flex items-center justify-between px-4 py-3 text-slate-600 rounded-lg {{ request()->routeIs('magasinier.recharges.*') ? 'active' : '' }}">
                         <div class="flex items-center">
@@ -172,6 +155,7 @@
 
             <!-- Page Content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-6">
+                @include('components.shift-countdown')
                 @yield('content')
             </main>
         </div>

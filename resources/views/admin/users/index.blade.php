@@ -25,6 +25,7 @@
                 <tr class="bg-white/40 border-b border-white/50 text-sm text-slate-600">
                     <th class="p-4 font-semibold">Nom d'utilisateur</th>
                     <th class="p-4 font-semibold">Rôle</th>
+                    <th class="p-4 font-semibold">Salaire mensuel</th>
                     <th class="p-4 font-semibold">Shift</th>
                     <th class="p-4 font-semibold">Boutique</th>
                     <th class="p-4 font-semibold">Appareil Autorisé</th>
@@ -43,13 +44,29 @@
                                 {{ ucfirst($user->role) }}
                             </span>
                         </td>
+                        <td class="p-4 text-slate-700 font-medium">
+                            {{ number_format($user->monthly_salary, 0, ',', ' ') }} FCFA
+                        </td>
                         <td class="p-4 text-slate-600">
-                            @if($user->shift)
-                                <i class="{{ $user->shift === 'matin' ? 'ri-sun-line text-amber-500' : 'ri-moon-line text-indigo-500' }} mr-1"></i>
-                                {{ ucfirst($user->shift) }}
-                            @else
-                                <span class="text-slate-400">-</span>
-                            @endif
+                            <div>
+                                @if($user->shift)
+                                    <div class="mb-2">
+                                        <i class="{{ $user->shift === 'matin' ? 'ri-sun-line text-amber-500' : 'ri-moon-line text-indigo-500' }} mr-1"></i>
+                                        <span class="font-medium">{{ ucfirst($user->shift) }}</span>
+                                    </div>
+                                @else
+                                    <span class="text-slate-400 mb-2 block">-</span>
+                                @endif
+                                @if($user->horaires->count())
+                                    <div class="text-xs text-slate-500 space-y-1">
+                                        @foreach($user->horaires as $horaire)
+                                            <div class="bg-slate-100 px-2 py-1 rounded">
+                                                {{ $horaire->getDayLabel() }} : {{ substr($horaire->heure_debut, 0, 5) }} - {{ substr($horaire->heure_fin, 0, 5) }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         </td>
                         <td class="p-4 text-slate-600">
                             {{ $user->boutique ? $user->boutique->nom : '-' }}
@@ -67,6 +84,10 @@
                         </td>
                         <td class="p-4 text-right">
                             <div class="flex justify-end space-x-2">
+                                <a href="{{ route('admin.users.edit', $user) }}" class="p-2 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors" title="Modifier l'employé">
+                                    <i class="ri-pencil-line"></i>
+                                </a>
+
                                 @if(!$user->device_token)
                                     <form action="{{ route('admin.users.authorize_device', $user) }}" method="POST" onsubmit="return confirm('Êtes-vous physiquement SUR l\'appareil de la boutique pour cet employé ? Si oui, cliquez sur OK pour autoriser ce navigateur de manière permanente.');">
                                         @csrf

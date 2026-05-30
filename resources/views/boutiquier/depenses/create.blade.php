@@ -9,11 +9,16 @@
 </div>
 
 @php
-    $prefillIntitule = request()->query('intitule');
-    $prefillMontant = request()->query('montant');
+    $prefill = [
+        'type' => request()->query('type') ?: (request()->query('intitule') || request()->query('montant') ? 'depense' : 'perte'),
+        'intitule' => request()->query('intitule', ''),
+        'montant' => request()->query('montant', ''),
+        'raison' => request()->query('raison', ''),
+        'produit_id' => request()->query('produit_id', ''),
+    ];
 @endphp
 
-<div class="glass-panel rounded-2xl p-8 max-w-3xl" x-data="depenseForm({intitule: '{{ $prefillIntitule }}', montant: '{{ $prefillMontant }}'})">
+<div class="glass-panel rounded-2xl p-8 max-w-3xl" x-data="depenseForm({{ json_encode($prefill) }})">
     <!-- Toggle -->
     <div class="flex p-1 bg-white/40 rounded-xl mb-8 w-fit shadow-inner border border-white/50">
         <button @click="type = 'perte'; closeCamera()" :class="type === 'perte' ? 'bg-white shadow text-emerald-700 font-bold' : 'text-slate-600 hover:text-slate-800'" class="px-6 py-2.5 rounded-lg text-sm transition-all flex items-center">
@@ -51,7 +56,7 @@
                     <select name="produit_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 outline-none" :required="type === 'perte'">
                         <option value="">-- Sélectionner un produit --</option>
                         @foreach($produits as $produit)
-                            <option value="{{ $produit->id }}">{{ $produit->nom }}</option>
+                            <option value="{{ $produit->id }}" {{ old('produit_id', request()->query('produit_id')) == $produit->id ? 'selected' : '' }}>{{ $produit->nom }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -63,7 +68,7 @@
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-2">Raison / Motif de la perte <span class="text-red-500">*</span></label>
-                    <textarea name="raison" rows="4" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Produit cassé lors du déchargement..." :required="type === 'perte'"></textarea>
+                    <textarea name="raison" rows="4" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Produit cassé lors du déchargement..." :required="type === 'perte'">{{ old('raison', request()->query('raison')) }}</textarea>
                 </div>
 
                 <div class="md:col-span-2">
@@ -160,7 +165,7 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('depenseForm', (prefill = {}) => ({
-            type: (prefill && (prefill.intitule || prefill.montant)) ? 'depense' : 'perte',
+            type: prefill.type || ((prefill.intitule || prefill.montant) ? 'depense' : 'perte'),
             cameraActive: false,
             currentVideoRef: null,
             cameraError: null,

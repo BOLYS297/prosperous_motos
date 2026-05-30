@@ -19,11 +19,14 @@
 @endif
 
 <div class="glass-panel rounded-2xl overflow-hidden">
-    <div class="p-6 border-b border-white/40 flex justify-between items-center">
-        <div class="relative w-64">
-            <input type="text" placeholder="Rechercher un produit..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-white/50 border border-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm">
-            <i class="ri-search-line absolute left-3 top-2.5 text-slate-400"></i>
-        </div>
+    <div class="p-6 border-b border-white/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <form action="{{ route('admin.produits.index') }}" method="GET" class="flex-1 min-w-0">
+            <label for="q" class="sr-only">Recherche produit</label>
+            <div class="relative w-full">
+                <input id="q" name="q" type="text" value="{{ old('q', $q ?? '') }}" placeholder="Rechercher un produit..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm" />
+                <i class="ri-search-line absolute left-3 top-3 text-slate-400"></i>
+            </div>
+        </form>
         <div class="text-sm text-slate-500">
             Total : <span class="font-bold text-slate-800">{{ $produits->count() }}</span> produits
         </div>

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Recharge extends Model
 {
-    protected $fillable = ['source_id', 'destination_id', 'user_id', 'montant', 'statut', 'fournisseur_id', 'raison_rejet', 'message_probleme'];
+    protected $fillable = ['source_id', 'destination_id', 'user_id', 'montant', 'statut', 'fournisseur_id', 'raison_rejet', 'message_probleme', 'achat_id'];
 
     public function source()
     {
@@ -36,5 +36,10 @@ class Recharge extends Model
     public function justificatifs()
     {
         return $this->hasMany(RechargeJustificatif::class);
+    }
+
+    public function achat()
+    {
+        return $this->belongsTo(Achat::class);
     }
 }

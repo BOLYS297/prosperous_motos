@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Perte extends Model
 {
-    protected $fillable = ['boutique_id', 'produit_id', 'user_id', 'quantite', 'raison', 'statut', 'admin_id', 'rejet_reason', 'validated_at'];
+    protected $fillable = ['boutique_id', 'produit_id', 'user_id', 'quantite', 'raison', 'statut', 'photo_justificatif', 'admin_id', 'rejet_reason', 'validated_at'];
 
     public function boutique()
     {

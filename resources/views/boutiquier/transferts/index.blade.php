@@ -115,7 +115,16 @@
 
                 <form :action="'{{ url('boutiquier/transferts') }}/' + demandeId + '/probleme'" method="POST">
                     @csrf
-                    <textarea name="note_probleme" rows="3" class="w-full p-3 border border-slate-300 rounded-xl mb-4 focus:ring-2 focus:ring-rose-500 outline-none" required placeholder="Votre message pour le magasinier..."></textarea>
+                    <div class="grid gap-4">
+                        <label class="block text-sm font-semibold text-slate-700">
+                            Quantité réellement reçue
+                            <input type="number" name="quantite_recue" min="0" class="w-full mt-2 p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none" required placeholder="Entrez la quantité reçue">
+                        </label>
+                        <label class="block text-sm font-semibold text-slate-700">
+                            Message au magasinier
+                            <textarea name="note_probleme" rows="3" class="w-full mt-2 p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none" required placeholder="Votre message pour le magasinier..."></textarea>
+                        </label>
+                    </div>
 
                     <div class="flex justify-end space-x-3 mt-4">
                         <button type="button" @click="showProbleme = false" class="px-4 py-2 text-slate-500 hover:text-slate-700 font-medium">Annuler</button>

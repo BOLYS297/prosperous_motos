@@ -18,7 +18,7 @@ class AdminSeeder extends Seeder
         User::updateOrCreate(
             ['nom_utilisateur' => 'admin'],
             [
-                'email' => 'admin@quincaillerie.test',
+                'email' => 'dd9159360@gmail.com',
                 'password' => bcrypt('admin123'),
                 'role' => 'super_admin',
             ]

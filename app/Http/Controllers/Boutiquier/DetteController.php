@@ -8,6 +8,8 @@ use App\Models\AchatPaiement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\DebtRecoveryNotification;
 
 class DetteController extends Controller
 {
@@ -70,6 +72,26 @@ class DetteController extends Controller
             }
         });
 
+        $this->notifyBoutiquierForDebtRecovery($boutique, $achat, $montant);
+
         return back()->with('success', 'Paiement enregistré. La dette a été partiellement recouvrée.');
+    }
+
+    protected function notifyBoutiquierForDebtRecovery($boutique, Achat $achat, float $montant)
+    {
+        $boutiqueUsers = \App\Models\User::where('boutique_id', $boutique->id)
+            ->where('role', 'boutiquier')
+            ->get();
+
+        if ($boutiqueUsers->isEmpty()) {
+            return;
+        }
+
+        Notification::send($boutiqueUsers, new DebtRecoveryNotification(
+            'Paiement de dette enregistré',
+            "Un paiement de " . number_format($montant, 0, ',', ' ') . " FCFA a été enregistré pour l'achat #{$achat->id}.",
+            'Voir les dettes',
+            route('boutiquier.dettes.index')
+        ));
     }
 }

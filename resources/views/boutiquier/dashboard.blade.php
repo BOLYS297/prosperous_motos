@@ -16,13 +16,28 @@
                 </div>
                 <span class="inline-flex items-center rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-xs font-semibold">{{ $notifications->count() }} non lue(s)</span>
             </div>
+            <div class="flex items-center justify-between mb-4">
+                <div></div>
+                <form action="{{ route('boutiquier.notifications.mark_all_read') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="text-sm text-slate-500 hover:text-slate-700 font-semibold">Tout marquer comme lu</button>
+                </form>
+            </div>
             <div class="space-y-4">
                 @foreach($notifications as $notification)
                     <div class="p-4 rounded-2xl bg-white border border-orange-100">
                         <p class="text-sm text-slate-700">{{ $notification->data['message'] }}</p>
-                        <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
                             <span>{{ $notification->created_at->diffForHumans() }}</span>
-                            <a href="{{ route('boutiquier.depenses.create') }}" class="text-blue-600 hover:text-blue-800 font-bold">Enregistrer une dépense</a>
+                            <div class="flex items-center gap-2">
+                                @if(!empty($notification->data['action_url']))
+                                    <a href="{{ $notification->data['action_url'] }}" class="text-blue-600 hover:text-blue-800 font-bold">Voir</a>
+                                @endif
+                                <form action="{{ route('boutiquier.notifications.mark_read', $notification->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-slate-500 hover:text-slate-700">Marquer comme lu</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -117,9 +132,18 @@
         </div>
     </div>
 
-    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
-        <i class="ri-grid-line mr-2 text-blue-500"></i> Saisir une vente directement depuis la liste des produits
-    </h3>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+            <i class="ri-grid-line text-blue-500"></i> Saisir une vente directement depuis la liste des produits
+        </h3>
+        <form action="{{ route('boutiquier.dashboard') }}" method="GET" class="w-full md:w-1/2">
+            <label for="q" class="sr-only">Rechercher produit</label>
+            <div class="relative">
+                <input id="q" name="q" type="text" value="{{ old('q', $q ?? '') }}" placeholder="Rechercher un produit à vendre..." class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 pl-10 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <i class="ri-search-line absolute left-3 top-3 text-slate-400"></i>
+            </div>
+        </form>
+    </div>
 
     <div class="mb-8">
         <div class="glass-panel rounded-2xl p-6 bg-white shadow-sm">

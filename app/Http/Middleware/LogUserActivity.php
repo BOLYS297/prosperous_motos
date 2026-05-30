@@ -66,7 +66,7 @@ class LogUserActivity
         }
 
         if ($routeName && str_contains($routeName, 'admin.rapports.depenses.reject')) {
-            return 'Dépense rejetée par l’administrateur. Motif : ' . ($request->input('rejet_reason') ?? 'non spécifié');
+            return 'Dépense rejetée par l’administrateur.';
         }
 
         if ($routeName && str_contains($routeName, 'admin.rapports.pertes.approve')) {
@@ -74,7 +74,7 @@ class LogUserActivity
         }
 
         if ($routeName && str_contains($routeName, 'admin.rapports.pertes.reject')) {
-            return 'Perte rejetée par l’administrateur. Motif : ' . ($request->input('rejet_reason') ?? 'non spécifié');
+            return 'Perte rejetée par l’administrateur.';
         }
 
         if ($routeName && str_contains($routeName, 'boutiquier.ventes.store')) {

@@ -11,6 +11,7 @@ class DemandeTransfert extends Model
         'produit_id',
         'quantite_demandee',
         'quantite_expediee',
+        'quantite_recue',
         'statut',
         'note_probleme',
     ];

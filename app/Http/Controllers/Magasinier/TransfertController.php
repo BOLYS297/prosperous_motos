@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DemandeTransfert;
 use App\Models\Stock;
+use App\Models\User;
+use App\Notifications\StockShippedNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class TransfertController extends Controller
 {
@@ -55,6 +58,23 @@ class TransfertController extends Controller
                 'statut' => 'expediee',
             ]);
         });
+
+        $demande->load(['produit', 'boutique']);
+
+        $boutiquiers = User::where('boutique_id', $demande->boutique_id)
+            ->where('role', 'boutiquier')
+            ->whereNotNull('email')
+            ->get();
+
+        if ($boutiquiers->isNotEmpty()) {
+            Notification::send($boutiquiers, new StockShippedNotification(
+                $demande->produit->nom,
+                $demande->quantite_demandee,
+                $request->quantite_expediee,
+                $demande->boutique->nom,
+                route('boutiquier.transferts.index')
+            ));
+        }
 
         return back()->with('success', 'Produits expédiés vers la boutique.');
     }

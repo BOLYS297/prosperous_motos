@@ -36,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\CheckHoraireConnexion::class,
         ],
 
         'api' => [
@@ -69,5 +70,6 @@ class Kernel extends HttpKernel
         'check.shift' => \App\Http\Middleware\CheckShiftTime::class,
         'check.device' => \App\Http\Middleware\CheckDevice::class,
         'log.activity' => \App\Http\Middleware\LogUserActivity::class,
+        'check.horaire' => \App\Http\Middleware\CheckHoraireConnexion::class,
     ];
 }

@@ -6,9 +6,9 @@
         <a href="{{ route('admin.achats.index') }}" class="text-blue-200 hover:text-white transition-colors flex items-center text-sm mb-4">
             <i class="ri-arrow-left-line mr-1"></i> Retour à l'historique
         </a>
-        <h2 class="text-3xl font-bold text-white tracking-tight">Détails de l'Achat #{{ str_pad($achat->id, 4, '0', STR_PAD_LEFT) }}</h2>
+        <h2 class="text-3xl font-bold text-primary tracking-tight">Détails de l'Achat #{{ str_pad($achat->id, 4, '0', STR_PAD_LEFT) }}</h2>
     </div>
-    <button onclick="window.print()" class="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center backdrop-blur-md">
+    <button onclick="window.print()" class="px-4 py-2 bg-white/20 text-emerald-600 rounded-lg hover:bg-white/30 transition-colors flex items-center backdrop-blur-md">
         <i class="ri-printer-line mr-2"></i> Imprimer
     </button>
 </div>
@@ -38,6 +38,10 @@
     </div>
 </div>
 
+@php
+    $hasReceptionIssue = $achat->recharge && ($achat->recharge->statut === 'anomalie' || $achat->recharge->lignes->sum('quantite_manquante') > 0);
+@endphp
+
 <div class="glass-panel rounded-2xl overflow-hidden mb-8">
     <div class="p-6 bg-white/50 border-b border-slate-200/50">
         <h3 class="font-bold text-slate-800">Produits achetés</h3>
@@ -47,7 +51,10 @@
             <thead>
                 <tr class="bg-white/40 border-b border-slate-200/50 text-sm text-slate-600">
                     <th class="p-4 font-semibold">Produit</th>
-                    <th class="p-4 font-semibold text-center">Quantité</th>
+                    <th class="p-4 font-semibold text-center">Quantité Achetée</th>
+                    @if($hasReceptionIssue)
+                        <th class="p-4 font-semibold text-center text-rose-600">Reçu / Manquant</th>
+                    @endif
                     <th class="p-4 font-semibold text-right">Prix Unitaire</th>
                     <th class="p-4 font-semibold text-right">Total</th>
                 </tr>
@@ -61,6 +68,21 @@
                         <td class="p-4 text-center text-slate-600 font-bold">
                             {{ $ligne->quantite }}
                         </td>
+                        @if($hasReceptionIssue)
+                            @php
+                                $rechargeLigne = $achat->recharge->lignes->firstWhere('produit_id', $ligne->produit_id);
+                            @endphp
+                            <td class="p-4 text-center">
+                                @if($rechargeLigne && $rechargeLigne->quantite_manquante > 0)
+                                    <div class="text-emerald-600 font-semibold">{{ $rechargeLigne->quantite_recue }} reçu(s)</div>
+                                    <div class="text-rose-600 font-bold text-xs bg-rose-100 px-2 py-0.5 rounded-full inline-block mt-1 border border-rose-200">
+                                        Dette fournisseur: {{ $rechargeLigne->quantite_manquante }} manquant(s)
+                                    </div>
+                                @else
+                                    <span class="text-emerald-600 font-bold text-xs bg-emerald-100 px-2 py-0.5 rounded-full"><i class="ri-check-line mr-1"></i>Complet</span>
+                                @endif
+                            </td>
+                        @endif
                         <td class="p-4 text-right text-slate-600">
                             {{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} FCFA
                         </td>
@@ -72,7 +94,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-slate-50/50">
-                    <td colspan="3" class="p-4 text-right font-medium text-slate-600 uppercase text-xs tracking-wider">
+                    <td colspan="{{ $hasReceptionIssue ? '4' : '3' }}" class="p-4 text-right font-medium text-slate-600 uppercase text-xs tracking-wider">
                         Montant Total de la facture
                     </td>
                     <td class="p-4 text-right font-bold text-2xl text-slate-800">

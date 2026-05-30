@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Magasinier;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\AdminValidationNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class RechargeController extends Controller
@@ -61,6 +63,16 @@ class RechargeController extends Controller
             $recharge->update(['statut' => 'confirmee_par_magasinier']);
         });
 
+        $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
+        if ($adminUsers->isNotEmpty()) {
+            Notification::send($adminUsers, new AdminValidationNotification(
+                'Recharge confirmée',
+                "La recharge #{$recharge->id} a été confirmée par le magasinier. Merci de la valider.",
+                'Voir la recharge',
+                route('admin.recharges.validation.show', $recharge)
+            ));
+        }
+
         return redirect()->route('magasinier.recharges.index')->with('success', 'Recharge confirmée. En attente de validation administrateur.');
     }
 
@@ -78,6 +90,16 @@ class RechargeController extends Controller
             'statut' => 'anomalie',
             'message_probleme' => $request->input('message'),
         ]);
+
+        $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
+        if ($adminUsers->isNotEmpty()) {
+            Notification::send($adminUsers, new AdminValidationNotification(
+                'Anomalie de recharge signalée',
+                "Le magasinier a signalé une anomalie sur la recharge #{$recharge->id}. Merci de vérifier et de valider.",
+                'Voir la recharge',
+                route('admin.recharges.validation.show', $recharge)
+            ));
+        }
 
         return redirect()->route('magasinier.recharges.index')->with('success', 'Problème signalé. Un responsable sera notifié.');
     }

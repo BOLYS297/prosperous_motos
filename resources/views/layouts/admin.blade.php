@@ -78,6 +78,11 @@
                         <span>Employés & Accès</span>
                     </a>
 
+                    <a href="{{ route('admin.payroll.index') }}" class="nav-item flex items-center px-4 py-3 text-slate-600 rounded-lg {{ request()->routeIs('admin.payroll.*') ? 'active' : '' }}">
+                        <i class="ri-file-list-3-line text-xl mr-3"></i>
+                        <span>Paie des employés</span>
+                    </a>
+
                     <a href="{{ route('admin.produits.index') }}" class="nav-item flex items-center px-4 py-3 text-slate-600 rounded-lg {{ request()->routeIs('admin.produits.*') ? 'active' : '' }}">
                         <i class="ri-price-tag-3-line text-xl mr-3"></i>
                         <span>Produits</span>

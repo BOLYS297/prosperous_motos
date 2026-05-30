@@ -5,14 +5,24 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Grossiste;
 use App\Models\PrixGrossiste;
+use App\Models\Produit;
 use Illuminate\Http\Request;
 
 class ProduitController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $produits = \App\Models\Produit::all();
-        return view('admin.produits.index', compact('produits'));
+        $q = trim($request->query('q', ''));
+
+        $produits = Produit::when($q, function ($query) use ($q) {
+            $query->where('nom', 'like', "%{$q}%")
+                ->orWhere('prix_achat', 'like', "%{$q}%")
+                ->orWhere('prix_vente', 'like', "%{$q}%");
+        })
+            ->orderBy('nom')
+            ->get();
+
+        return view('admin.produits.index', compact('produits', 'q'));
     }
 
     public function create()

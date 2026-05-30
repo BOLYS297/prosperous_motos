@@ -84,9 +84,11 @@
                             <i class="ri-check-line mr-2"></i> Approuver (OK)
                         </button>
                     </form>
-                    <a href="{{ route('admin.recharges.validation.show', $recharge) }}" class="flex-1 px-4 py-2 bg-rose-600 text-black rounded-lg font-medium hover:bg-rose-700 transition-colors text-center">
-                        <i class="ri-close-line mr-2"></i> Rejeter
-                    </a>
+                    @if($recharge->statut === 'anomalie')
+                        <a href="{{ route('admin.recharges.validation.show', $recharge) }}" class="flex-1 px-4 py-2 bg-rose-600 text-black rounded-lg font-medium hover:bg-rose-700 transition-colors text-center">
+                            <i class="ri-close-line mr-2"></i> Rejeter
+                        </a>
+                    @endif
                 </div>
             </div>
         @endforeach

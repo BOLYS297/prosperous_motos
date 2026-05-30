@@ -33,13 +33,19 @@
             </div>
         </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
-            <input type="text" name="password" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Boutiquier2026" required>
-            <p class="text-xs text-slate-500 mt-1">Le mot de passe est affiché en clair pour que vous puissiez le communiquer à l'employé.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
+                <input type="text" name="password" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Boutiquier2026" required>
+                <p class="text-xs text-slate-500 mt-1">Le mot de passe est affiché en clair pour que vous puissiez le communiquer à l'employé.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Salaire mensuel (FCFA)</label>
+                <input type="number" min="0" name="monthly_salary" value="{{ old('monthly_salary') }}" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" x-data="{ role: 'boutiquier' }">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" x-data="{ role: '{{ old('role', 'boutiquier') }}' }">
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Rôle</label>
                 <select name="role" x-model="role" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" required>
@@ -48,20 +54,48 @@
                 </select>
             </div>
 
-            <div x-show="role === 'boutiquier'">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Shift Horaire</label>
-                <select name="shift" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="matin">Matin (07h - 17h)</option>
-                    <option value="soir">Soir (17h - 22h)</option>
-                </select>
+            <div x-show="role === 'boutiquier' || role === 'magasinier'" class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Plages horaires autorisées</label>
+                <div class="grid grid-cols-1 gap-3">
+                    <div x-show="role === 'magasinier'">
+                        @if($magasiniers->isEmpty())
+                            <p class="text-sm text-slate-500">Aucun horaire actif défini pour les magasiniers.</p>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($magasiniers as $horaire)
+                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                                        <input type="checkbox" name="horaires[]" value="{{ $horaire->id }}" {{ is_array(old('horaires')) && in_array($horaire->id, old('horaires')) ? 'checked' : '' }}>
+                                        <span>{{ $horaire->getDayLabel() }} — {{ $horaire->heure_debut }} à {{ $horaire->heure_fin }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <div x-show="role === 'boutiquier'">
+                        @if($boutiquiers->isEmpty())
+                            <p class="text-sm text-slate-500">Aucun horaire actif défini pour les boutiquiers.</p>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($boutiquiers as $horaire)
+                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                                        <input type="checkbox" name="horaires[]" value="{{ $horaire->id }}" {{ is_array(old('horaires')) && in_array($horaire->id, old('horaires')) ? 'checked' : '' }}>
+                                        <span>{{ $horaire->getDayLabel() }} — {{ $horaire->heure_debut }} à {{ $horaire->heure_fin }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><i class="ri-information-line"></i> Sélectionnez au moins une tranche horaire parmi celles définies pour le rôle.</p>
             </div>
 
-            <div x-show="role === 'boutiquier' || role === 'magasinier'" class="md:col-span-2">
+            <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Assignation Boutique/Magasin</label>
                 <select name="boutique_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">-- Sélectionner une boutique --</option>
                     @foreach($boutiques as $boutique)
-                        <option value="{{ $boutique->id }}">{{ $boutique->nom }}</option>
+                        <option value="{{ $boutique->id }}" {{ old('boutique_id') == $boutique->id ? 'selected' : '' }}>{{ $boutique->nom }}</option>
                     @endforeach
                 </select>
                 <p class="text-xs text-slate-500 mt-2"><i class="ri-information-line"></i> Optionnel lors de la création. Vous pouvez assigner la boutique plus tard.</p>

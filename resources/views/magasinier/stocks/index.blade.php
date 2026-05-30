@@ -9,9 +9,15 @@
 </div>
 
 <div class="glass-panel rounded-2xl overflow-hidden">
-    <div class="p-6 bg-white/50 border-b border-slate-200/50 flex justify-between items-center">
+    <div class="p-6 bg-white/50 border-b border-slate-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h3 class="font-bold text-slate-800">Inventaire</h3>
-        <!-- Search could go here -->
+        <form action="{{ route('magasinier.stocks.index') }}" method="GET" class="w-full md:w-1/2">
+            <label for="q" class="sr-only">Rechercher produit</label>
+            <div class="relative">
+                <input id="q" name="q" type="text" value="{{ old('q', $q ?? '') }}" placeholder="Rechercher un produit dans le stock..." class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 pl-10 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <i class="ri-search-line absolute left-3 top-3 text-slate-400"></i>
+            </div>
+        </form>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">

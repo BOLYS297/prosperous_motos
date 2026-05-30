@@ -121,6 +121,7 @@
 
             <!-- Page Content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-6">
+                @include('components.shift-countdown')
                 @yield('content')
             </main>
         </div>

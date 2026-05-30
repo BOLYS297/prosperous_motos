@@ -12,7 +12,7 @@ Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'check.shift', 'check.device', 'log.activity'])->group(function () {
+Route::middleware(['auth', 'check.horaire', 'check.device', 'log.activity'])->group(function () {
 
     // Redirection centrale selon le rôle
     Route::get('/dashboard', function () {
@@ -35,6 +35,10 @@ Route::middleware(['auth', 'check.shift', 'check.device', 'log.activity'])->grou
     })->name('dashboard');
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');
+        Route::get('payroll', [\App\Http\Controllers\Admin\PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('dashboard/deduction', [\App\Http\Controllers\Admin\AdminController::class, 'updateDeductionAmount'])->name('dashboard.deduction.update');
+        Route::post('deductions/{deduction}/approve', [\App\Http\Controllers\Admin\AdminController::class, 'approveDeduction'])->name('deductions.approve');
+        Route::post('deductions/{deduction}/reject', [\App\Http\Controllers\Admin\AdminController::class, 'rejectDeduction'])->name('deductions.reject');
 
         Route::post('users/{user}/authorize-device', [\App\Http\Controllers\Admin\UserController::class, 'authorizeDevice'])->name('users.authorize_device');
         Route::post('users/{user}/reset-device', [\App\Http\Controllers\Admin\UserController::class, 'resetDevice'])->name('users.reset_device');
@@ -45,6 +49,14 @@ Route::middleware(['auth', 'check.shift', 'check.device', 'log.activity'])->grou
         Route::get('grossistes/{grossiste}/pricing', [\App\Http\Controllers\Admin\GrossisteController::class, 'pricing'])->name('grossistes.pricing');
         Route::post('grossistes/{grossiste}/pricing', [\App\Http\Controllers\Admin\GrossisteController::class, 'updatePricing'])->name('grossistes.pricing.update');
         Route::resource('achats', \App\Http\Controllers\Admin\AchatController::class);
+        Route::get('depenses/create', [\App\Http\Controllers\Admin\DepenseController::class, 'create'])->name('depenses.create');
+        Route::post('depenses', [\App\Http\Controllers\Admin\DepenseController::class, 'store'])->name('depenses.store');
+
+        // Tranches horaires de connexion
+        Route::get('horaires', [\App\Http\Controllers\Admin\HoraireConnexionController::class, 'index'])->name('horaires.index');
+        Route::post('horaires', [\App\Http\Controllers\Admin\HoraireConnexionController::class, 'store'])->name('horaires.store');
+        Route::patch('horaires/{horaireConnexion}/toggle', [\App\Http\Controllers\Admin\HoraireConnexionController::class, 'toggle'])->name('horaires.toggle');
+        Route::delete('horaires/{horaireConnexion}', [\App\Http\Controllers\Admin\HoraireConnexionController::class, 'destroy'])->name('horaires.destroy');
 
         // Profil Admin (modifier ses identifiants)
         Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('profile.edit');
@@ -89,8 +101,11 @@ Route::middleware(['auth', 'check.shift', 'check.device', 'log.activity'])->grou
     // Profil Boutiquier
     Route::middleware(['role:boutiquier'])->prefix('boutiquier')->name('boutiquier.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Boutiquier\DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Boutiquier\DashboardController::class, 'markNotificationAsRead'])->name('notifications.mark_read');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Boutiquier\DashboardController::class, 'markAllNotificationsAsRead'])->name('notifications.mark_all_read');
         Route::post('/ventes', [\App\Http\Controllers\Boutiquier\VenteController::class, 'store'])->name('ventes.store');
         Route::get('/historique', [\App\Http\Controllers\Boutiquier\VenteController::class, 'historique'])->name('ventes.historique');
+        Route::get('/ventes/{vente}', [\App\Http\Controllers\Boutiquier\VenteController::class, 'show'])->name('ventes.show');
 
         Route::get('/transferts', [\App\Http\Controllers\Boutiquier\DemandeTransfertController::class, 'index'])->name('transferts.index');
         Route::get('/transferts/create', [\App\Http\Controllers\Boutiquier\DemandeTransfertController::class, 'create'])->name('transferts.create');

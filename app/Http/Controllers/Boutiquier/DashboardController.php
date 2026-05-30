@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Boutiquier;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $q = trim($request->query('q', ''));
         $user = Auth::user();
         $boutiqueId = $user->boutique_id;
         $boutique = \App\Models\Boutique::find($boutiqueId);
@@ -17,9 +19,14 @@ class DashboardController extends Controller
             $produits = collect();
         } else {
             // Produits avec leur stock local (sans révéler la quantité exacte)
-            $produits = \App\Models\Produit::with(['stocks' => function ($query) use ($boutiqueId) {
-                $query->where('boutique_id', $boutiqueId);
-            }])->orderBy('nom')->get();
+            $produits = \App\Models\Produit::when($q, function ($query) use ($q) {
+                $query->where('nom', 'like', "%{$q}%");
+            })
+                ->with(['stocks' => function ($query) use ($boutiqueId) {
+                    $query->where('boutique_id', $boutiqueId);
+                }])
+                ->orderBy('nom')
+                ->get();
         }
 
         $grossistes = \App\Models\Grossiste::with('prixProduits')->get();
@@ -35,6 +42,7 @@ class DashboardController extends Controller
 
         $dettes = \App\Models\Achat::with('paiements')
             ->where('statut', 'dette')
+            ->where('boutique_id', $boutiqueId)
             ->get()
             ->filter(fn($achat) => $achat->reste_a_payer > 0);
 
@@ -42,6 +50,22 @@ class DashboardController extends Controller
         $dettesRestantes = $dettes->sum(fn($achat) => $achat->reste_a_payer);
         $notifications = $user->unreadNotifications;
 
-        return view('boutiquier.dashboard', compact('boutique', 'produits', 'grossistes', 'ventesAujourdhui', 'nbVentesJour', 'dettesCount', 'dettesRestantes', 'notifications'));
+        return view('boutiquier.dashboard', compact('boutique', 'produits', 'grossistes', 'ventesAujourdhui', 'nbVentesJour', 'dettesCount', 'dettesRestantes', 'notifications', 'q'));
+    }
+
+    public function markNotificationAsRead($notificationId)
+    {
+        $notification = Auth::user()->unreadNotifications()->find($notificationId);
+        if ($notification) {
+            $notification->markAsRead();
+        }
+
+        return back();
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        Auth::user()->unreadNotifications->markAsRead();
+        return back();
     }
 }

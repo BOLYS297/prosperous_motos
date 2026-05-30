@@ -6,6 +6,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Boutique;
+use App\Models\HoraireConnexion;
+use App\Models\SalaryPeriod;
 
 class User extends Authenticatable
 {
@@ -25,11 +28,22 @@ class User extends Authenticatable
         'shift',
         'device_token',
         'boutique_id',
+        'monthly_salary',
     ];
 
     public function boutique()
     {
         return $this->belongsTo(Boutique::class);
+    }
+
+    public function horaires()
+    {
+        return $this->belongsToMany(HoraireConnexion::class, 'horaire_connexion_user');
+    }
+
+    public function salaryPeriods()
+    {
+        return $this->hasMany(SalaryPeriod::class);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Boutiquier;
 
 use App\Http\Controllers\Controller;
+use App\Models\Vente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -83,7 +84,7 @@ class VenteController extends Controller
     {
         $boutiqueId = Auth::user()->boutique_id;
 
-        $ventes = \App\Models\Vente::with(['lignes.produit', 'user'])
+        $ventes = Vente::with(['lignes.produit', 'user'])
             ->where('boutique_id', $boutiqueId)
             ->whereDate('created_at', today())
             ->orderBy('created_at', 'desc')
@@ -92,5 +93,18 @@ class VenteController extends Controller
         $totalJour = $ventes->sum('montant_total');
 
         return view('boutiquier.historique', compact('ventes', 'totalJour'));
+    }
+
+    public function show(Vente $vente)
+    {
+        $boutiqueId = Auth::user()->boutique_id;
+
+        if ($vente->boutique_id !== $boutiqueId) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $vente->load(['lignes.produit', 'user']);
+
+        return view('boutiquier.ventes.show', compact('vente'));
     }
 }

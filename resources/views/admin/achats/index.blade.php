@@ -11,6 +11,19 @@
     </a>
 </div>
 
+<form action="{{ route('admin.achats.index') }}" method="GET" class="mb-6 grid gap-4 md:grid-cols-[1fr_auto] items-end">
+    <div>
+        <label for="q" class="sr-only">Recherche achats</label>
+        <input id="q" name="q" type="text" value="{{ old('q', $q ?? '') }}" placeholder="Rechercher achat, fournisseur, boutique ou statut..." class="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+    </div>
+    <div class="flex items-center gap-3">
+        <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors">Chercher</button>
+        @if(!empty($q))
+            <a href="{{ route('admin.achats.index') }}" class="px-5 py-3 border border-slate-300 rounded-2xl text-slate-700 hover:bg-slate-100 transition-colors">Effacer</a>
+        @endif
+    </div>
+</form>
+
 @if(session('success'))
     <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center">
         <i class="ri-checkbox-circle-line text-lg mr-2"></i>
@@ -33,9 +46,21 @@
             </thead>
             <tbody class="text-sm">
                 @forelse($achats as $achat)
+                    @php
+                        $hasSupplierDebt = $achat->recharge && $achat->recharge->lignes->sum('quantite_manquante') > 0;
+                    @endphp
                     <tr class="border-b border-white/20 hover:bg-white/30 transition-colors">
                         <td class="p-4 font-medium text-slate-800">
                             #ACHAT-{{ str_pad($achat->id, 4, '0', STR_PAD_LEFT) }}
+                            @if($hasSupplierDebt)
+                                <span class="ml-2 inline-flex items-center text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full" title="Dette fournisseur détectée">
+                                    <i class="ri-error-warning-line mr-1"></i> Dette fournisseur
+                                </span>
+                            @elseif($achat->recharge && $achat->recharge->statut === 'anomalie')
+                                <span class="ml-2 inline-flex items-center text-xs font-bold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full" title="Anomalie signalée lors de la réception">
+                                    <i class="ri-alert-fill mr-1"></i> Anomalie
+                                </span>
+                            @endif
                             <div class="text-xs text-slate-500 font-normal">{{ $achat->created_at->format('d/m/Y H:i') }}</div>
                         </td>
                         <td class="p-4 text-slate-800 font-medium">

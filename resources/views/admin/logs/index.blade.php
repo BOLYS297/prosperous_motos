@@ -78,7 +78,7 @@
                                 $actionLabel = strtolower($log->action_label ?? $log->action);
                                 $badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
                                 if(str_contains($actionLabel, 'validation') || str_contains($actionLabel, 'ajout') || str_contains($actionLabel, 'créa') || str_contains($actionLabel, 'enregistr')) $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                if(str_contains($actionLabel, 'rejet') || str_contains($actionLabel, 'erreur') || str_contains($actionLabel, 'suppression')) $badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                                if(str_contains($actionLabel, 'rejet') || str_contains($actionLabel, 'erreur') || str_contains($actionLabel, 'suppression') || str_contains($actionLabel, 'déconnexion')) $badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
                                 if(str_contains($actionLabel, 'modif') || str_contains($actionLabel, 'mise à jour') || str_contains($actionLabel, 'gestion')) $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
                                 if(str_contains($actionLabel, 'connexion')) $badgeClass = 'bg-indigo-50 text-indigo-700 border-indigo-200';
                             @endphp

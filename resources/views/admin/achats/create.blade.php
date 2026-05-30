@@ -44,7 +44,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Boutique à débiter <span class="text-red-500">*</span></label>
-                <select name="debit_boutique_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                <select name="debit_boutique_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">-- Sélectionner une boutique --</option>
                     @foreach($allBoutiques as $boutique)
                         <option value="{{ $boutique->id }}">{{ $boutique->nom }}</option>

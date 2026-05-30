@@ -212,62 +212,61 @@
                             <th class="py-3 font-semibold">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
                         @foreach($pendingDepenses as $depense)
-                            <tr x-data="{ open: false }" class="border-b border-slate-100 hover:bg-slate-50/50 align-top">
-                                <td class="py-3 font-medium text-slate-700">{{ $depense->boutique->nom ?? 'Magasinier' }}</td>
-                                <td class="py-3 font-bold text-slate-800">{{ number_format($depense->montant, 0, ',', ' ') }} FCFA</td>
-                                <td class="py-3 text-slate-500">{{ $depense->user->name ?? '—' }}</td>
-                                <td class="py-3">
-                                    <div class="flex flex-col gap-2">
-                                        {{-- <button type="button" @click="open = !open" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Voir détails</button> --}}
-                                        <form action="{{ route('admin.rapports.depenses.approve', $depense) }}" method="POST" class="inline">
+                            <tbody x-data="{ open: false }" class="border-b border-slate-100 hover:bg-slate-50/50 align-top">
+                                <tr>
+                                    <td class="py-3 font-medium text-slate-700">{{ $depense->boutique->nom ?? 'Magasinier' }}</td>
+                                    <td class="py-3 font-bold text-slate-800">{{ number_format($depense->montant, 0, ',', ' ') }} FCFA</td>
+                                    <td class="py-3 text-slate-500">{{ $depense->user->nom_utilisateur ?? '—' }}</td>
+                                    <td class="py-3">
+                                        <div class="flex flex-col gap-2">
+                                            <button type="button" @click="open = !open" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Voir détails</button>
+                                            <form action="{{ route('admin.rapports.depenses.approve', $depense) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-black rounded-xl text-sm font-semibold">Valider</button>
+                                            </form>
+                                        <form action="{{ route('admin.rapports.depenses.reject', $depense) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-black rounded-xl text-sm font-semibold">Valider</button>
-                                        </form>
-                                        <form action="{{ route('admin.rapports.depenses.reject', $depense) }}" method="POST" class="inline space-y-2">
-                                            @csrf
-                                            <input type="text" name="rejet_reason" placeholder="Motif de rejet" class="w-full px-3 py-2 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-rose-500 outline-none text-sm" required>
-                                            <button type="submit" class="w-full px-3 py-2 bg-rose-600 hover:bg-rose-700 text-black rounded-xl text-sm font-semibold">Rejeter</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr x-show="open" x-cloak class="bg-slate-50">
-                                <td colspan="4" class="px-4 py-4 text-sm text-slate-700">
-                                    <div class="grid gap-4 md:grid-cols-2">
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Intitulé</p>
-                                            <p>{{ $depense->intitule }}</p>
+                                                <button type="submit" class="w-full px-3 py-2 bg-rose-600 hover:bg-rose-700 text-black rounded-xl text-sm font-semibold">Rejeter</button>
+                                            </form>
                                         </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Montant</p>
-                                            <p>{{ number_format($depense->montant, 0, ',', ' ') }} FCFA</p>
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Description</p>
-                                            <p class="text-slate-600">{{ $depense->description ?? 'Aucune description' }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Créée par</p>
-                                            <p>{{ $depense->user->name ?? '—' }} le {{ $depense->created_at->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                    </div>
-                                    @if($depense->photo_justificatif)
-                                        <div class="mt-4">
-                                            <p class="font-semibold text-slate-700">Justificatif</p>
-                                            <div class="mt-2 rounded-2xl overflow-hidden border border-slate-200 bg-white">
-                                                <img src="{{ asset('storage/'.$depense->photo_justificatif) }}" alt="Justificatif dépense" class="w-full object-contain max-h-72">
+                                    </td>
+                                </tr>
+                                <tr x-show="open" x-cloak class="bg-slate-50">
+                                    <td colspan="4" class="px-4 py-4 text-sm text-slate-700">
+                                        <div class="grid gap-4 md:grid-cols-2">
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Intitulé</p>
+                                                <p>{{ $depense->intitule }}</p>
                                             </div>
-                                            <a href="{{ asset('storage/'.$depense->photo_justificatif) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-700 hover:underline mt-3 block">
-                                                <i class="ri-file-image-line"></i> Ouvrir la pièce jointe
-                                            </a>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Montant</p>
+                                                <p>{{ number_format($depense->montant, 0, ',', ' ') }} FCFA</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Description</p>
+                                                <p class="text-slate-600">{{ $depense->description ?? 'Aucune description' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Créée par</p>
+                                                <p>{{ $depense->user->nom_utilisateur ?? '—' }} le {{ $depense->created_at->format('d/m/Y H:i') }}</p>
+                                            </div>
                                         </div>
-                                    @endif
-                                </td>
-                            </tr>
+                                        @if($depense->photo_justificatif)
+                                            <div class="mt-4">
+                                                <p class="font-semibold text-slate-700">Justificatif</p>
+                                                <div class="mt-2 rounded-2xl overflow-hidden border border-slate-200 bg-white">
+                                                    <img src="{{ asset('storage/'.$depense->photo_justificatif) }}" alt="Justificatif dépense" class="w-full object-contain max-h-72">
+                                                </div>
+                                                <a href="{{ asset('storage/'.$depense->photo_justificatif) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-700 hover:underline mt-3 block">
+                                                    <i class="ri-file-image-line"></i> Ouvrir la pièce jointe
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tbody>
                         @endforeach
-                    </tbody>
                 </table>
             </div>
         @endif
@@ -295,64 +294,63 @@
                             <th class="py-3 font-semibold">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
                         @foreach($pendingPertes as $perte)
-                            <tr x-data="{ open: false }" class="border-b border-slate-100 hover:bg-slate-50/50 align-top">
-                                <td class="py-3 font-medium text-slate-700">{{ $perte->boutique->nom ?? 'Boutique inconnue' }} / {{ $perte->produit->nom ?? 'Produit inconnu' }}</td>
-                                <td class="py-3 font-bold text-slate-800">{{ $perte->quantite }}</td>
-                                <td class="py-3 text-slate-500">{{ $perte->user->name ?? '—' }}</td>
-                                <td class="py-3">
-                                    <div class="flex flex-col gap-2">
-                                        <button type="button" @click="open = !open" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Voir détails</button>
-                                        <form action="{{ route('admin.rapports.pertes.approve', $perte) }}" method="POST" class="inline">
+                            <tbody x-data="{ open: false }" class="border-b border-slate-100 hover:bg-slate-50/50 align-top">
+                                <tr>
+                                    <td class="py-3 font-medium text-slate-700">{{ $perte->boutique->nom ?? 'Boutique inconnue' }} / {{ $perte->produit->nom ?? 'Produit inconnu' }}</td>
+                                    <td class="py-3 font-bold text-slate-800">{{ $perte->quantite }}</td>
+                                    <td class="py-3 text-slate-500">{{ $perte->user->nom_utilisateur ?? '—' }}</td>
+                                    <td class="py-3">
+                                        <div class="flex flex-col gap-2">
+                                            <button type="button" @click="open = !open" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Voir détails</button>
+                                            <form action="{{ route('admin.rapports.pertes.approve', $perte) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold">Valider</button>
+                                            </form>
+                                        <form action="{{ route('admin.rapports.pertes.reject', $perte) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold">Valider</button>
-                                        </form>
-                                        <form action="{{ route('admin.rapports.pertes.reject', $perte) }}" method="POST" class="inline space-y-2">
-                                            @csrf
-                                            <input type="text" name="rejet_reason" placeholder="Motif de rejet" class="w-full px-3 py-2 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-rose-500 outline-none text-sm" required>
-                                            <button type="submit" class="w-full px-3 py-2 bg-rose-600 hover:bg-rose-700 text-black rounded-xl text-sm font-semibold">Rejeter</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr x-show="open" x-cloak class="bg-slate-50">
-                                <td colspan="4" class="px-4 py-4 text-sm text-slate-700">
-                                    <div class="grid gap-4 md:grid-cols-2">
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Produit</p>
-                                            <p>{{ $perte->produit->nom ?? 'Non spécifié' }}</p>
+                                                <button type="submit" class="w-full px-3 py-2 bg-rose-600 hover:bg-rose-700 text-black rounded-xl text-sm font-semibold">Rejeter</button>
+                                            </form>
                                         </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Quantité</p>
-                                            <p>{{ $perte->quantite }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Raison</p>
-                                            <p class="text-slate-600">{{ $perte->raison }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-slate-700">Créée par</p>
-                                            <p>{{ $perte->user->name ?? '—' }} le {{ $perte->created_at->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                    </div>
-                                    @if($perte->photo_justificatif)
-                                        <div class="mt-4">
-                                            <p class="font-semibold text-slate-700">Justificatif</p>
-                                            <div class="mt-2 rounded-2xl overflow-hidden border border-slate-200 bg-white">
-                                                <img src="{{ asset('storage/'.$perte->photo_justificatif) }}" alt="Justificatif perte" class="w-full object-contain max-h-72">
+                                    </td>
+                                </tr>
+                                <tr x-show="open" x-cloak class="bg-slate-50">
+                                    <td colspan="4" class="px-4 py-4 text-sm text-slate-700">
+                                        <div class="grid gap-4 md:grid-cols-2">
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Produit</p>
+                                                <p>{{ $perte->produit->nom ?? 'Non spécifié' }}</p>
                                             </div>
-                                            <a href="{{ asset('storage/'.$perte->photo_justificatif) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-700 hover:underline mt-3 block">
-                                                <i class="ri-file-image-line"></i> Ouvrir la pièce jointe
-                                            </a>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Quantité</p>
+                                                <p>{{ $perte->quantite }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Raison</p>
+                                                <p class="text-slate-600">{{ $perte->raison }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-700">Créée par</p>
+                                                <p>{{ $perte->user->nom_utilisateur ?? '—' }} le {{ $perte->created_at->format('d/m/Y H:i') }}</p>
+                                            </div>
                                         </div>
-                                    @endif
-                                </td>
-                            </tr>
+                                        @if($perte->photo_justificatif)
+                                            <div class="mt-4">
+                                                <p class="font-semibold text-slate-700">Justificatif</p>
+                                                <div class="mt-2 rounded-2xl overflow-hidden border border-slate-200 bg-white">
+                                                    <img src="{{ asset('storage/'.$perte->photo_justificatif) }}" alt="Justificatif perte" class="w-full object-contain max-h-72">
+                                                </div>
+                                                <a href="{{ asset('storage/'.$perte->photo_justificatif) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-700 hover:underline mt-3 block">
+                                                    <i class="ri-file-image-line"></i> Ouvrir la pièce jointe
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tbody>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    </table>
+                </div>
         @endif
     </div>
 </div>
