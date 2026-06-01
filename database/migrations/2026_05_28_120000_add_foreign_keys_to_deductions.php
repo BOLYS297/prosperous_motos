@@ -11,16 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('deductions')) {
-            // Table already exists, just verify structure
-            Schema::table('deductions', function (Blueprint $table) {
-                // Check and add foreign keys if not present
-                if (!Schema::hasTable('deductions_keys_added')) {
-                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                    $table->foreign('approved_by')->references('id')->on('users')->onDelete('set null');
-                }
-            });
-        }
+        // Foreign keys already defined in create_deductions_table migration via ->constrained()
+        // This migration is intentionally a no-op to avoid duplicate key errors.
     }
 
     /**

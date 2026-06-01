@@ -18,6 +18,10 @@ return new class extends Migration
             $table->decimal('solde', 15, 2)->default(0);
             $table->timestamps();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('boutique_id')->references('id')->on('boutiques')->onDelete('set null');
+        });
     }
 
     /**
