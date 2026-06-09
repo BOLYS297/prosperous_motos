@@ -68,7 +68,7 @@
                             <td class="p-4 text-right">
                                 @if($demande->statut == 'expediee')
                                     <div class="flex items-center justify-end space-x-2">
-                                        <form action="{{ route('boutiquier.transferts.confirmer', $demande->id) }}" method="POST">
+                                        <form action="{{ route('boutiquier.transferts.confirmer', $demande->id) }}" method="POST" data-offline-sync="true">
                                             @csrf
                                             <button type="submit" class="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors shadow-sm" onclick="return confirm('Confirmez-vous avoir reçu la totalité des produits ?')">
                                                 <i class="ri-check-double-line"></i> Confirmer
@@ -113,7 +113,7 @@
                 <h3 class="text-xl font-bold text-rose-600 mb-4 flex items-center"><i class="ri-error-warning-line mr-2"></i> Signaler un problème</h3>
                 <p class="text-slate-600 text-sm mb-4">Décrivez le problème rencontré (ex: manque 2 produits, produit abîmé, etc.).</p>
 
-                <form :action="'{{ url('boutiquier/transferts') }}/' + demandeId + '/probleme'" method="POST">
+                <form :action="'{{ url('boutiquier/transferts') }}/' + demandeId + '/probleme'" method="POST" data-offline-sync="true">
                     @csrf
                     <div class="grid gap-4">
                         <label class="block text-sm font-semibold text-slate-700">

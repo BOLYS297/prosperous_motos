@@ -8,11 +8,17 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
+Route::get('/pwa-ping', function () {
+    return response('', 204);
+});
+
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'check.horaire', 'check.device', 'log.activity'])->group(function () {
+
+    Route::get('/offline-data', [\App\Http\Controllers\OfflineDataController::class, 'index'])->name('offline.data');
 
     // Redirection centrale selon le rôle
     Route::get('/dashboard', function () {

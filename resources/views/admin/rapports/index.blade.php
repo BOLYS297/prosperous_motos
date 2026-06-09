@@ -237,7 +237,7 @@
                                         <div class="grid gap-4 md:grid-cols-2">
                                             <div>
                                                 <p class="font-semibold text-slate-700">Intitulé</p>
-                                                <p>{{ $depense->intitule }}</p>
+                                                <p>{{ $depense->intitule ?? 'Dépense administrative' }}</p>
                                             </div>
                                             <div>
                                                 <p class="font-semibold text-slate-700">Montant</p>

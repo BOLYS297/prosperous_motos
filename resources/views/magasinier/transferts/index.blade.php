@@ -106,7 +106,7 @@
                     <div class="text-sm text-slate-500 mt-2">Quantité demandée : <strong class="text-blue-600 text-lg" x-text="quantite"></strong></div>
                 </div>
 
-                <form :action="'{{ url('magasinier/transferts') }}/' + demandeId + '/expedier'" method="POST">
+                <form data-offline-sync="true" :action="'{{ url('magasinier/transferts') }}/' + demandeId + '/expedier'" method="POST">
                     @csrf
                     <label class="block text-sm font-medium text-slate-700 mb-2">Quantité réellement expédiée <span class="text-red-500">*</span></label>
                     <p class="text-xs text-slate-500 mb-2">Vous pouvez ajuster cette quantité si vous n'avez pas assez de stock.</p>

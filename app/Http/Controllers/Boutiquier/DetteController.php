@@ -17,7 +17,7 @@ class DetteController extends Controller
     {
         $boutique = Auth::user()->boutique;
 
-        $dettes = Achat::with(['fournisseur', 'paiements'])
+        $dettes = Achat::with(['fournisseur', 'paiements', 'recharge'])
             ->where('statut', 'dette')
             ->get()
             ->filter(function (Achat $achat) {

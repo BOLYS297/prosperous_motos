@@ -82,14 +82,54 @@ class RechargeController extends Controller
             'justificatifs.*' => 'image|max:5120',
             'captured_images.*' => 'nullable|string',
             'message' => 'required|string',
+            'lignes' => 'required|array',
+            'lignes.*.id' => 'required|integer|exists:recharge_lignes,id',
+            'lignes.*.quantite_recue' => 'nullable|integer|min:0',
         ]);
 
-        $this->saveJustificatifs($request, $recharge);
+        $hasAnomaly = false;
+        foreach ($request->input('lignes', []) as $data) {
+            $ligne = \App\Models\RechargeLigne::find($data['id'] ?? null);
+            if (! $ligne || $ligne->recharge_id !== $recharge->id) {
+                continue;
+            }
 
-        $recharge->update([
-            'statut' => 'anomalie',
-            'message_probleme' => $request->input('message'),
-        ]);
+            $quantiteRecue = isset($data['quantite_recue']) ? intval($data['quantite_recue']) : 0;
+            if ($quantiteRecue < $ligne->quantite_envoyee) {
+                $hasAnomaly = true;
+                break;
+            }
+        }
+
+        if (! $hasAnomaly) {
+            return redirect()->back()->withInput()->withErrors(['message' => 'Vous devez signaler une anomalie sur au moins un produit.']);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $recharge) {
+            $this->saveJustificatifs($request, $recharge);
+
+            if ($request->has('lignes')) {
+                foreach ($request->input('lignes') as $data) {
+                    $ligne = \App\Models\RechargeLigne::find($data['id'] ?? null);
+                    if (! $ligne || $ligne->recharge_id !== $recharge->id) {
+                        continue;
+                    }
+
+                    $quantiteRecue = isset($data['quantite_recue']) ? intval($data['quantite_recue']) : 0;
+                    $quantiteRecue = max(0, min($quantiteRecue, $ligne->quantite_envoyee));
+
+                    $ligne->update([
+                        'quantite_recue' => $quantiteRecue,
+                        'quantite_manquante' => max(0, $ligne->quantite_envoyee - $quantiteRecue),
+                    ]);
+                }
+            }
+
+            $recharge->update([
+                'statut' => 'anomalie',
+                'message_probleme' => $request->input('message'),
+            ]);
+        });
 
         $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
         if ($adminUsers->isNotEmpty()) {

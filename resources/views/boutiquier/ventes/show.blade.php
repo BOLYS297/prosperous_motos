@@ -18,6 +18,7 @@
     <div class="text-center mb-4">
         <div class="font-bold text-lg text-slate-900">Prosperous Motos</div>
         <div class="text-xs text-slate-500">Ticket de caisse</div>
+        <div class="text-xs text-slate-500">Immatriculation : P019017879563S</div>
     </div>
 
     <div class="text-xs text-slate-600 mb-4">

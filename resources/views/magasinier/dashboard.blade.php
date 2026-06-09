@@ -6,6 +6,21 @@
     <p class="text-black">Boutique : <span class="font-bold">{{ $boutique->nom }}</span></p>
 </div>
 
+@if(isset($shiftWarning) && $shiftWarning)
+    <div class="mb-6 rounded-2xl bg-amber-100 border border-amber-200 p-5 shadow-sm text-amber-900">
+        <div class="flex items-start gap-3">
+            <div class="mt-0.5">
+                <i class="ri-time-line text-3xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg">Fin de tranche horaire imminente</h3>
+                <p class="text-sm text-amber-700 mt-1">Votre tranche se termine à <strong>{{ $shiftWarning['end'] }}</strong>. Il reste <strong>{{ $shiftWarning['minutes'] }} min {{ $shiftWarning['seconds'] }} s</strong>.</p>
+                <p class="text-xs text-amber-700 mt-1">Sauvegardez vos actions et préparez-vous à clôturer votre session.</p>
+            </div>
+        </div>
+    </div>
+@endif
+
 @if(session('success'))
     <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center">
         <i class="ri-checkbox-circle-line text-lg mr-2"></i>

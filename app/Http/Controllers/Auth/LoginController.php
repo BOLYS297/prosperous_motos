@@ -53,8 +53,12 @@ class LoginController extends Controller
                 $hourlyAmount = \App\Models\DeductionSetting::getHourlyAmount();
 
                 if ($minutesLate > 0 && $hourlyAmount > 0) {
-                    $hoursLate = (int) ceil($minutesLate / 60);
-                    $deductionAmount = (int) ($hoursLate * $hourlyAmount);
+                    // Calcul précis à la minute : déduction au prorata du nombre de minutes
+                    $deductionAmount = (int) round(($minutesLate / 60.0) * $hourlyAmount);
+
+                    // Pour l'affichage : séparer heures complètes et minutes restantes
+                    $hoursLate = intdiv($minutesLate, 60);
+                    $minutesRemaining = $minutesLate % 60;
 
                     if (!Deduction::where('user_id', $user->id)
                         ->whereDate('actual_login_at', $now->toDateString())
@@ -69,7 +73,7 @@ class LoginController extends Controller
                             'event_type' => 'login',
                             'actual_login_at' => $now,
                             'status' => 'pending',
-                            'description' => "Retard de {$hoursLate} heure(s) et {$minutesLate} minute(s) pour connexion tardive",
+                            'description' => "Retard de {$hoursLate} heure(s) et {$minutesRemaining} minute(s) pour connexion tardive",
                         ]);
 
                         $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
@@ -147,8 +151,12 @@ class LoginController extends Controller
             return;
         }
 
-        $hoursEarly = (int) ceil($minutesEarly / 60);
-        $deductionAmount = (int) ($hoursEarly * $hourlyAmount);
+        // Calcul précis à la minute : déduction au prorata du nombre de minutes
+        $deductionAmount = (int) round(($minutesEarly / 60.0) * $hourlyAmount);
+
+        // Pour l'affichage : séparer heures complètes et minutes restantes
+        $hoursEarly = intdiv($minutesEarly, 60);
+        $minutesRemaining = $minutesEarly % 60;
 
         Deduction::create([
             'user_id' => $user->id,
@@ -159,7 +167,7 @@ class LoginController extends Controller
             'actual_login_at' => $logoutTime,
             'actual_logout_at' => $logoutTime,
             'status' => 'pending',
-            'description' => "Déconnexion anticipée de {$hoursEarly} heure(s) et {$minutesEarly} minute(s) avant la fin de journée",
+            'description' => "Déconnexion anticipée de {$hoursEarly} heure(s) et {$minutesRemaining} minute(s) avant la fin de journée",
         ]);
         // Notifier les administrateurs pour validation (comme pour les connexions tardives)
         $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();

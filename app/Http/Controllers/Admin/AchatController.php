@@ -88,6 +88,7 @@ class AchatController extends Controller
             $achat = \App\Models\Achat::create([
                 'fournisseur_id' => $request->fournisseur_id,
                 'boutique_id' => $request->boutique_id,
+                'debit_boutique_id' => $request->input('statut') === 'paye' ? $request->debit_boutique_id : null,
                 'statut' => $request->statut,
                 'montant_total' => $montant_total
             ]);
@@ -114,26 +115,36 @@ class AchatController extends Controller
             }
 
             // Si c'est payé, on déduit le montant du solde de la boutique choisie et on notifie le boutiquier présent.
-            if ($request->statut === 'paye') {
+            $debitBoutique = $request->input('statut') === 'paye' ? \App\Models\Boutique::find($request->debit_boutique_id) : null;
+
+            if ($request->statut === 'paye' && $debitBoutique) {
                 // Enregistrer le paiement mais ne pas décrémenter le solde immédiatement.
                 // La boutique choisie devra enregistrer une dépense et l'admin validera ensuite.
-                $debitBoutique = \App\Models\Boutique::find($request->debit_boutique_id);
-                if ($debitBoutique) {
-                    \App\Models\AchatPaiement::create([
-                        'achat_id' => $achat->id,
-                        'boutique_id' => $debitBoutique->id,
-                        'user_id' => Auth::id(),
-                        'montant' => $montant_total,
-                        'description' => 'Proposition de paiement comptant pour l\'achat #' . $achat->id,
-                    ]);
+                \App\Models\AchatPaiement::create([
+                    'achat_id' => $achat->id,
+                    'boutique_id' => $debitBoutique->id,
+                    'user_id' => Auth::id(),
+                    'montant' => $montant_total,
+                    'description' => 'Proposition de paiement comptant pour l\'achat #' . $achat->id,
+                ]);
 
-                    // Notifier le(s) boutiquier(s) présents dans la boutique choisie
-                    $this->notifyBoutiquiers($debitBoutique, $montant_total, $achat);
-                }
+                // Notifier le(s) boutiquier(s) de la boutique débitée
+                $this->notifyBoutiquiers($debitBoutique, $montant_total, $achat);
 
                 // Notifier aussi les boutiquiers de la boutique destination
                 if ($destination) {
                     $this->notifyBoutiquiers($destination, $montant_total, $achat);
+                }
+            } elseif ($request->statut === 'dette') {
+                // Pour les dettes : notifier TOUS les boutiquiers de TOUTES les boutiques
+                $tousLesBootiquiers = \App\Models\User::where('role', 'boutiquier')->get();
+                if ($tousLesBootiquiers->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($tousLesBootiquiers, new \App\Notifications\AchatDepenseNotification(
+                        $destination ? $destination->nom : 'Magasin Central',
+                        $montant_total,
+                        $achat->id,
+                        Auth::user()->nom_utilisateur ?? 'Administrateur'
+                    ));
                 }
             }
 

@@ -157,7 +157,7 @@
         </div>
     @else
         <div class="p-6 bg-white border-t border-slate-200 text-slate-700">
-            <p class="text-sm">Aucune déduction en attente ne correspond à cette recherche.</p>
+            {{-- <p class="text-sm">Aucune déduction en attente ne correspond à cette recherche.</p> --}}
             @if(!empty($deductionSearch))
                 <p class="mt-2 text-sm text-slate-500">Effacez le filtre pour revenir à toutes les déductions en attente.</p>
             @else

@@ -18,7 +18,7 @@
         <p>Une fois la demande envoyée, le magasinier devra la valider et expédier les produits. Le stock ne sera ajouté à votre boutique qu'une fois que vous aurez <strong>confirmé la réception</strong>.</p>
     </div>
 
-    <form action="{{ route('boutiquier.transferts.store') }}" method="POST">
+    <form action="{{ route('boutiquier.transferts.store') }}" method="POST" data-offline-sync="true">
         @csrf
 
         @if ($errors->any())

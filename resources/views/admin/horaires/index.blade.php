@@ -23,7 +23,7 @@
                     <p class="text-sm text-slate-600 mt-1">Heures d'accès au système</p>
                 </div>
                 <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <i class="ri-warehouse-2-line text-blue-600 text-xl"></i>
+                    <i class="ri-store-2-line text-blue-600 text-xl"></i>
                 </div>
             </div>
         </div>

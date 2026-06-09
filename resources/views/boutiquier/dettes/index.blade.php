@@ -70,7 +70,7 @@
                                 <td class="p-4 text-center text-emerald-700 font-semibold">{{ number_format($achat->montant_paye, 0, ',', ' ') }} FCFA</td>
                                 <td class="p-4 text-center text-rose-700 font-semibold">{{ number_format($achat->reste_a_payer, 0, ',', ' ') }} FCFA</td>
                                 <td class="p-4">
-                                    <form action="{{ route('boutiquier.dettes.payer', $achat) }}" method="POST" class="space-y-3">
+                                    <form action="{{ route('boutiquier.dettes.payer', $achat) }}" method="POST" data-offline-sync="true" class="space-y-3">
                                         @csrf
                                         <label class="block text-slate-600 text-sm">Montant à payer</label>
                                         <input name="montant" type="number" min="1" step="0.01" max="{{ $achat->reste_a_payer }}" value="{{ min($boutique->solde, $achat->reste_a_payer) }}" class="w-full px-3 py-2 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" required>

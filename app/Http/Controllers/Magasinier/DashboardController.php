@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Magasinier;
 
 use App\Http\Controllers\Controller;
+use App\Models\HoraireConnexion;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -37,6 +38,17 @@ class DashboardController extends Controller
 
         $rechargeCount = $recharges->count();
 
-        return view('magasinier.dashboard', compact('boutique', 'totalProduits', 'ruptures', 'pertesMois', 'rechargeCount', 'recharges'));
+        $shiftWarning = null;
+        $remainingSeconds = HoraireConnexion::getRemainingSecondsForUser($user);
+        if ($remainingSeconds !== null && $remainingSeconds > 0 && $remainingSeconds <= 1800) {
+            $interval = HoraireConnexion::getCurrentIntervalForUser($user);
+            $shiftWarning = [
+                'minutes' => floor($remainingSeconds / 60),
+                'seconds' => $remainingSeconds % 60,
+                'end' => $interval->heure_fin,
+            ];
+        }
+
+        return view('magasinier.dashboard', compact('boutique', 'totalProduits', 'ruptures', 'pertesMois', 'rechargeCount', 'recharges', 'shiftWarning'));
     }
 }

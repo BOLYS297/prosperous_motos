@@ -26,7 +26,7 @@
 @endif
 
 <div class="bg-white shadow rounded-3xl p-8 max-w-3xl">
-    <form action="{{ route('admin.depenses.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('admin.depenses.store') }}" method="POST">
         @csrf
 
         <div class="grid gap-6 mb-6">
@@ -41,29 +41,14 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Intitulé de la dépense <span class="text-red-500">*</span></label>
-                <input type="text" name="intitule" value="{{ old('intitule') }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Achat de fournitures administratives" required>
-            </div>
-
-            <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Montant (FCFA) <span class="text-red-500">*</span></label>
                 <input type="number" step="0.01" name="montant" value="{{ old('montant') }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 10000" required>
-            </div>
-
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
-                <textarea name="description" rows="4" class="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Détails de la dépense, contexte ou justificatif interne">{{ old('description') }}</textarea>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Photo justificative (optionnelle)</label>
-                <input type="file" name="photo_justificatif" accept="image/*" class="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
         </div>
 
         <div class="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-700">
             <p class="font-medium">Notification automatique</p>
-            <p class="text-sm">La boutique sélectionnée recevra un e-mail et une notification dans l’application pour déclarer une perte correspondante.</p>
+            <p class="text-sm">La boutique sélectionnée recevra un e-mail et une notification dans l’application pour déclarer une dépense correspondante.</p>
         </div>
 
         <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow hover:bg-blue-700 transition">Créer la dépense et notifier la boutique</button>

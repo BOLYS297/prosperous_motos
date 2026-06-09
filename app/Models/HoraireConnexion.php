@@ -62,6 +62,23 @@ class HoraireConnexion extends Model
             ->first();
     }
 
+    public static function getRemainingSecondsForUser(User $user): ?int
+    {
+        $interval = self::getCurrentIntervalForUser($user);
+        if (! $interval) {
+            return null;
+        }
+
+        try {
+            $endTime = Carbon::parse(now()->toDateString() . ' ' . $interval->heure_fin);
+        } catch (\Exception $e) {
+            $endTime = Carbon::today()->setTimeFromTimeString($interval->heure_fin);
+        }
+
+        $remaining = $endTime->getTimestamp() - now()->getTimestamp();
+        return $remaining > 0 ? $remaining : 0;
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'horaire_connexion_user');

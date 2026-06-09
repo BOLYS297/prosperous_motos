@@ -3,6 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Prosperous Motos">
+    <link rel="manifest" href="/manifest.webmanifest" type="application/manifest+json">
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ asset('logo.jpg') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Administration - Plateforme de Gestion</title>
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
@@ -41,7 +47,7 @@
             color: #1e40af;
         }
         #bg-image{
-            background-image: url('{{ asset('magasinier-bg.jpg') }}');
+            background-image: url('{{ asset('magasinier-bg.png') }}');
             background-size: cover;
             background-position: center;
             opacity: 80%;
@@ -152,5 +158,6 @@
         </div>
     </div>
 
+    @include('components.pwa-status')
 </body>
 </html>

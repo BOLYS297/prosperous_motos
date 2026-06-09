@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage;
 
 class DepenseController extends Controller
 {
@@ -24,27 +23,21 @@ class DepenseController extends Controller
     {
         $request->validate([
             'boutique_id' => 'required|exists:boutiques,id',
-            'intitule' => 'required|string|max:255',
-            'description' => 'nullable|string',
             'montant' => 'required|numeric|min:0',
-            'photo_justificatif' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $boutique = Boutique::findOrFail($request->input('boutique_id'));
-        $photoPath = null;
+        $defaultIntitule = 'Dépense administrative';
+        $defaultDescription = 'Dépense administrative enregistrée par l’administrateur.';
 
-        if ($request->hasFile('photo_justificatif')) {
-            $photoPath = $request->file('photo_justificatif')->store('justificatifs', 'public');
-        }
-
-        DB::transaction(function () use ($request, $boutique, &$photoPath) {
+        DB::transaction(function () use ($request, $boutique, $defaultIntitule, $defaultDescription) {
             Depense::create([
                 'boutique_id' => $boutique->id,
                 'user_id' => Auth::id(),
-                'intitule' => $request->input('intitule'),
-                'description' => $request->input('description'),
+                'intitule' => $defaultIntitule,
+                'description' => $defaultDescription,
                 'montant' => $request->input('montant'),
-                'photo_justificatif' => $photoPath,
+                'photo_justificatif' => null,
                 'statut' => 'approved',
                 'admin_id' => Auth::id(),
                 'validated_at' => now(),
@@ -55,15 +48,13 @@ class DepenseController extends Controller
 
         $this->notifyBoutiqueOfAdminExpense(
             $boutique,
-            $request->input('intitule'),
-            $request->input('montant'),
-            $request->input('description')
+            $request->input('montant')
         );
 
         return redirect()->route('admin.dashboard')->with('success', 'Dépense personnelle enregistrée et la boutique a été notifiée.');
     }
 
-    protected function notifyBoutiqueOfAdminExpense(Boutique $boutique, string $intitule, float $montant, ?string $description)
+    protected function notifyBoutiqueOfAdminExpense(Boutique $boutique, float $montant)
     {
         $users = \App\Models\User::where('role', 'boutiquier')
             ->where('boutique_id', $boutique->id)
@@ -75,7 +66,7 @@ class DepenseController extends Controller
             return;
         }
 
-        $reason = trim($description ?: "Dépense administrative : {$intitule}");
+        $reason = 'Dépense administrative imputée à la boutique.';
         $actionUrl = route('boutiquier.depenses.create', [
             'type' => 'perte',
             'raison' => $reason,

@@ -188,7 +188,7 @@ class AdminController extends Controller
         if ($deduction->user) {
             $deduction->user->notify(new SalaryDeductionNotification(
                 'Déduction salariale rejetée',
-                "Votre demande de déduction salariale de {$deduction->amount} FCFA a été rejetée par l'administrateur.",
+                "Votre déduction salariale de {$deduction->amount} FCFA a été rejetée par l'administrateur.",
                 'Voir les détails',
                 route('dashboard')
             ));

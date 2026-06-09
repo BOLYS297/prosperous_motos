@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Boutiquier;
 
 use App\Http\Controllers\Controller;
+use App\Models\HoraireConnexion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,15 +43,25 @@ class DashboardController extends Controller
 
         $dettes = \App\Models\Achat::with('paiements')
             ->where('statut', 'dette')
-            ->where('boutique_id', $boutiqueId)
             ->get()
             ->filter(fn($achat) => $achat->reste_a_payer > 0);
 
         $dettesCount = $dettes->count();
         $dettesRestantes = $dettes->sum(fn($achat) => $achat->reste_a_payer);
         $notifications = $user->unreadNotifications;
+        $shiftWarning = null;
 
-        return view('boutiquier.dashboard', compact('boutique', 'produits', 'grossistes', 'ventesAujourdhui', 'nbVentesJour', 'dettesCount', 'dettesRestantes', 'notifications', 'q'));
+        $remainingSeconds = HoraireConnexion::getRemainingSecondsForUser($user);
+        if ($remainingSeconds !== null && $remainingSeconds > 0 && $remainingSeconds <= 1800) {
+            $interval = HoraireConnexion::getCurrentIntervalForUser($user);
+            $shiftWarning = [
+                'minutes' => floor($remainingSeconds / 60),
+                'seconds' => $remainingSeconds % 60,
+                'end' => $interval->heure_fin,
+            ];
+        }
+
+        return view('boutiquier.dashboard', compact('boutique', 'produits', 'grossistes', 'ventesAujourdhui', 'nbVentesJour', 'dettesCount', 'dettesRestantes', 'notifications', 'q', 'shiftWarning'));
     }
 
     public function markNotificationAsRead($notificationId)

@@ -113,6 +113,18 @@
                     </tbody>
                 </table>
             </div>
+
+            @php
+                $anomalieLignes = $recharge->lignes->where('quantite_manquante', '>', 0);
+            @endphp
+            @if($anomalieLignes->isNotEmpty())
+                <div class="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <p class="font-semibold text-rose-900">Anomalies par produit</p>
+                    <p class="text-sm text-rose-700 mt-2">
+                        {{ $anomalieLignes->count() }} produit(s) ont une quantité reçue inférieure à la quantité attendue.
+                    </p>
+                </div>
+            @endif
         </div>
 
         <!-- Justificatifs -->

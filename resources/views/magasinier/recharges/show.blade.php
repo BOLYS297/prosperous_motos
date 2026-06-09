@@ -73,24 +73,41 @@
     <form id="probleme" action="{{ route('magasinier.recharges.probleme', $recharge) }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="space-y-4 mb-4">
-            <h3 class="font-semibold text-lg">Quantités reçues</h3>
+            <h3 class="font-semibold text-lg">Signalement d'anomalie par produit</h3>
+            <p class="text-sm text-slate-500">Cochez seulement le(s) produit(s) en anomalie et indiquez la quantité réellement reçue. Les autres produits seront considérés comme reçus normalement.</p>
             @foreach($recharge->lignes as $ligne)
-                <div class="p-3 border rounded flex items-center justify-between">
-                    <div>
-                        <div class="font-medium">{{ $ligne->produit->nom }}</div>
-                        <div class="text-sm text-slate-500">Qté attendue: {{ $ligne->quantite_envoyee }}</div>
-                    </div>
-                    <div class="w-48">
-                        <label class="block text-xs text-slate-500">Qté reçue</label>
-                        <input type="number" name="lignes[{{ $loop->index }}][quantite_recue]" value="{{ $ligne->quantite_recue ?? max($ligne->quantite_envoyee - 1, 0) }}" min="0" max="{{ max($ligne->quantite_envoyee - 1, 0) }}" class="w-full px-2 py-1 border rounded">
-                        <input type="hidden" name="lignes[{{ $loop->index }}][id]" value="{{ $ligne->id }}">
+                @php
+                    $oldQuantite = old("lignes.{$loop->index}.quantite_recue", $ligne->quantite_recue ?? $ligne->quantite_envoyee);
+                    $isAnomalie = $oldQuantite < $ligne->quantite_envoyee;
+                @endphp
+                <div class="p-3 border rounded">
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <div class="font-medium">{{ $ligne->produit->nom }}</div>
+                            <div class="text-sm text-slate-500">Qté attendue: {{ $ligne->quantite_envoyee }}</div>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full lg:w-96">
+                            <label class="inline-flex items-center gap-2 text-sm">
+                                <input type="checkbox" class="anomalie-toggle" data-index="{{ $loop->index }}" {{ $isAnomalie ? 'checked' : '' }}>
+                                Signaler une anomalie sur ce produit
+                            </label>
+                            <div class="grid grid-cols-1 gap-2">
+                                <input type="hidden" name="lignes[{{ $loop->index }}][id]" value="{{ $ligne->id }}">
+                                <input type="hidden" name="lignes[{{ $loop->index }}][quantite_recue]" class="quantite-recue-hidden" value="{{ $oldQuantite }}">
+                                <div>
+                                    <label class="block text-xs text-slate-500">Qté reçue réelle</label>
+                                    <input type="number" class="quantite-recue-input w-full px-2 py-1 border rounded {{ $isAnomalie ? 'bg-white' : 'bg-slate-100' }}" value="{{ $oldQuantite }}" min="0" max="{{ $ligne->quantite_envoyee }}" {{ $isAnomalie ? '' : 'disabled' }} data-expected="{{ $ligne->quantite_envoyee }}">
+                                </div>
+                                <p class="text-xs text-slate-500 anomaly-note {{ $isAnomalie ? '' : 'hidden' }}">La quantité renseignée sera prise en compte pour cette ligne.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endforeach
         </div>
         <div>
             <label class="block text-sm">Décrire le problème</label>
-            <textarea name="message" class="w-full mt-2 p-2 border rounded" required></textarea>
+            <textarea name="message" class="w-full mt-2 p-2 border rounded" required>{{ old('message') }}</textarea>
         </div>
         <div class="mt-2">
             <label class="block text-sm">Justificatifs (photos)</label>
@@ -189,6 +206,43 @@
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         addCapturedImageInput(dataUrl);
         addPhotoThumbnail(dataUrl);
+    });
+
+    function updateAnomalieLine(lineIndex, checked) {
+        const lineWrapper = document.querySelector(`.anomalie-toggle[data-index="${lineIndex}"]`).closest('.p-3');
+        const hiddenInput = lineWrapper.querySelector('.quantite-recue-hidden');
+        const visibleInput = lineWrapper.querySelector('.quantite-recue-input');
+        const note = lineWrapper.querySelector('.anomaly-note');
+        const expected = parseInt(visibleInput.dataset.expected, 10);
+
+        if (checked) {
+            visibleInput.disabled = false;
+            visibleInput.classList.remove('bg-slate-100');
+            visibleInput.classList.add('bg-white');
+            note.classList.remove('hidden');
+            hiddenInput.value = visibleInput.value;
+        } else {
+            visibleInput.disabled = true;
+            visibleInput.value = expected;
+            hiddenInput.value = expected;
+            visibleInput.classList.remove('bg-white');
+            visibleInput.classList.add('bg-slate-100');
+            note.classList.add('hidden');
+        }
+    }
+
+    document.querySelectorAll('.anomalie-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', event => {
+            updateAnomalieLine(event.target.dataset.index, event.target.checked);
+        });
+    });
+
+    document.querySelectorAll('.quantite-recue-input').forEach(input => {
+        input.addEventListener('input', event => {
+            const wrapper = event.target.closest('.p-3');
+            const hiddenInput = wrapper.querySelector('.quantite-recue-hidden');
+            hiddenInput.value = event.target.value;
+        });
     });
 
     window.addEventListener('beforeunload', () => {

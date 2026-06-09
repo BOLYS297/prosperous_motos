@@ -8,7 +8,7 @@
     <h2 class="text-3xl font-bold text-primary mb-2 tracking-tight">Enregistrer un Achat</h2>
 </div>
 
-<div class="glass-panel rounded-2xl p-8" x-data="achatForm()">
+<div class="glass-panel rounded-2xl p-8" x-data="achatForm()" @mount="init()">
     <form action="{{ route('admin.achats.store') }}" method="POST">
         @csrf
 
@@ -43,20 +43,20 @@
                 <p class="text-xs text-slate-500 mt-2">La destination finale de cet achat est toujours un magasin.</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Boutique à débiter <span class="text-red-500">*</span></label>
-                <select name="debit_boutique_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Boutique à débiter <span class="text-red-500">*</span> (comptant uniquement)</label>
+                <select name="debit_boutique_id" id="debit_boutique_select" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">-- Sélectionner une boutique --</option>
                     @foreach($allBoutiques as $boutique)
                         <option value="{{ $boutique->id }}">{{ $boutique->nom }}</option>
                     @endforeach
                 </select>
-                <p class="text-xs text-slate-500 mt-2">Le solde de cette boutique sera utilisé pour régler l'achat comptant.</p>
+                <p class="text-xs text-slate-500 mt-2">Le solde de cette boutique sera utilisé pour régler l'achat comptant. (Pas nécessaire pour les dettes)</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Statut du paiement <span class="text-red-500">*</span></label>
-                <select name="statut" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                <select name="statut" x-model="statut" @change="toggleDebitField()" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" required>
                     <option value="paye">Payé comptant (déduit du solde)</option>
-                    <option value="dette">Achat à crédit (Dette)</option>
+                    <option value="dette">Achat à crédit (Dette partagée par toutes les boutiques)</option>
                 </select>
             </div>
         </div>
@@ -120,9 +120,25 @@
     function achatForm() {
         return {
             produits: @json($produits),
+            statut: 'paye',
             lignes: [
                 { produit_id: '', prix_unitaire: 0, quantite: 1 }
             ],
+            init() {
+                // Initialiser la visibilité du champ debit_boutique_id au chargement
+                this.toggleDebitField();
+            },
+            toggleDebitField() {
+                const debitSelect = document.getElementById('debit_boutique_select');
+                if (this.statut === 'paye') {
+                    debitSelect.setAttribute('required', 'required');
+                    debitSelect.closest('div').style.display = 'block';
+                } else {
+                    debitSelect.removeAttribute('required');
+                    debitSelect.closest('div').style.display = 'none';
+                    debitSelect.value = '';
+                }
+            },
             addLine() {
                 this.lignes.push({ produit_id: '', prix_unitaire: 0, quantite: 1 });
             },

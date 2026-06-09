@@ -29,7 +29,7 @@
         </button>
     </div>
 
-    <form action="{{ route('boutiquier.depenses.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('boutiquier.depenses.store') }}" method="POST" enctype="multipart/form-data" data-offline-sync="true">
         @csrf
         <input type="hidden" name="type" x-model="type">
 

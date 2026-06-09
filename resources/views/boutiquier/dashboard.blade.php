@@ -7,6 +7,21 @@
         <p class="text-black">Boutique : <span class="font-bold">{{ $boutique ? $boutique->nom : 'Aucune boutique assignée' }}</span> — {{ now()->translatedFormat('l d F Y') }}</p>
     </div>
 
+    @if(isset($shiftWarning) && $shiftWarning)
+        <div class="mb-6 rounded-2xl bg-amber-100 border border-amber-200 p-5 shadow-sm text-amber-900">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5">
+                    <i class="ri-time-line text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">Fin de tranche horaire imminente</h3>
+                    <p class="text-sm text-amber-700 mt-1">Votre tranche se termine à <strong>{{ $shiftWarning['end'] }}</strong>. Il reste <strong>{{ $shiftWarning['minutes'] }} min {{ $shiftWarning['seconds'] }} s</strong>.</p>
+                    <p class="text-xs text-amber-700 mt-1">Sauvegardez vos actions et préparez-vous à clôturer votre session.</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if(isset($notifications) && $notifications->isNotEmpty())
         <div class="mb-6 glass-panel rounded-2xl p-6 bg-orange-50 border border-orange-200">
             <div class="flex items-center justify-between mb-4">
@@ -18,7 +33,7 @@
             </div>
             <div class="flex items-center justify-between mb-4">
                 <div></div>
-                <form action="{{ route('boutiquier.notifications.mark_all_read') }}" method="POST">
+                <form action="{{ route('boutiquier.notifications.mark_all_read') }}" method="POST" data-offline-sync="true">
                     @csrf
                     <button type="submit" class="text-sm text-slate-500 hover:text-slate-700 font-semibold">Tout marquer comme lu</button>
                 </form>
@@ -33,7 +48,7 @@
                                 @if(!empty($notification->data['action_url']))
                                     <a href="{{ $notification->data['action_url'] }}" class="text-blue-600 hover:text-blue-800 font-bold">Voir</a>
                                 @endif
-                                <form action="{{ route('boutiquier.notifications.mark_read', $notification->id) }}" method="POST" class="inline">
+                                <form action="{{ route('boutiquier.notifications.mark_read', $notification->id) }}" method="POST" class="inline" data-offline-sync="true">
                                     @csrf
                                     <button type="submit" class="text-slate-500 hover:text-slate-700">Marquer comme lu</button>
                                 </form>
@@ -101,6 +116,8 @@
             <div>
                 <div class="text-sm font-medium text-slate-500 mb-1">Dettes à recouvrer</div>
                 <div class="text-2xl font-black text-slate-800">{{ number_format($dettesRestantes ?? 0, 0, ',', ' ') }} FCFA</div>
+                <div class="text-sm text-slate-500 mt-1">{{ $dettesCount ?? 0 }} achat(s) en dette</div>
+                <div class="text-xs text-slate-400 mt-2">Consultez le suivi des dettes depuis la page dédiée.</div>
             </div>
         </div>
     </div>
@@ -183,7 +200,7 @@
                 $stock = $produit->stocks->first();
                 $enStock = $stock && $stock->quantite > 0;
             @endphp
-            <form method="POST" action="{{ route('boutiquier.ventes.store') }}" data-produit-id="{{ $produit->id }}" data-client-price="{{ $produit->prix_vente ?? 0 }}" data-in-stock="{{ $enStock ? 1 : 0 }}" class="product-card glass-panel rounded-2xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-lg {{ $enStock ? 'cursor-default' : 'opacity-50 cursor-not-allowed' }}">
+            <form method="POST" action="{{ route('boutiquier.ventes.store') }}" data-offline-sync="true" data-produit-id="{{ $produit->id }}" data-client-price="{{ $produit->prix_vente ?? 0 }}" data-in-stock="{{ $enStock ? 1 : 0 }}" class="product-card glass-panel rounded-2xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-lg {{ $enStock ? 'cursor-default' : 'opacity-50 cursor-not-allowed' }}">
                 @csrf
                 <input type="hidden" name="produit_id" value="{{ $produit->id }}">
                 <input type="hidden" name="is_grossiste" class="is-grossiste-input" value="0">
