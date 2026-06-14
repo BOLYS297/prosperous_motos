@@ -11,9 +11,9 @@ class OfflineDataController extends Controller
 {
     public function index(Request $request)
     {
-        $produits = Produit::select(['id', 'nom', 'prix_achat', 'prix_vente', 'image'])->get();
+        $produits = Produit::select(['id', 'nom', 'reference', 'prix_achat', 'prix_vente', 'image'])->get();
 
-        $stocks = Stock::with(['produit:id,nom,prix_achat,prix_vente,image'])->get()->map(function (Stock $stock) {
+        $stocks = Stock::with(['produit:id,nom,reference,prix_achat,prix_vente,image'])->get()->map(function (Stock $stock) {
             return [
                 'id' => $stock->id,
                 'produit_id' => $stock->produit_id,
@@ -22,6 +22,7 @@ class OfflineDataController extends Controller
                 'produit' => $stock->produit ? [
                     'id' => $stock->produit->id,
                     'nom' => $stock->produit->nom,
+                    'reference' => $stock->produit->reference,
                     'prix_achat' => $stock->produit->prix_achat,
                     'prix_vente' => $stock->produit->prix_vente,
                     'image' => $stock->produit->image,

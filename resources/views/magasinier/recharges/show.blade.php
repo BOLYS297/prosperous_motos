@@ -44,7 +44,7 @@
             @foreach($recharge->lignes as $ligne)
                 <div class="p-3 border rounded flex items-center justify-between">
                     <div>
-                        <div class="font-medium">{{ $ligne->produit->nom }}</div>
+                        <div class="font-medium">{{ $ligne->produit->nom }}@if($ligne->produit && $ligne->produit->reference) ({{ $ligne->produit->reference }})@endif</div>
                         <div class="text-sm text-slate-500">Qté attendue: {{ $ligne->quantite_envoyee }}</div>
                     </div>
                     <div class="w-48">
@@ -83,7 +83,7 @@
                 <div class="p-3 border rounded">
                     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <div class="font-medium">{{ $ligne->produit->nom }}</div>
+                            <div class="font-medium">{{ $ligne->produit->nom }}@if($ligne->produit && $ligne->produit->reference) ({{ $ligne->produit->reference }})@endif</div>
                             <div class="text-sm text-slate-500">Qté attendue: {{ $ligne->quantite_envoyee }}</div>
                         </div>
                         <div class="flex flex-col gap-2 w-full lg:w-96">

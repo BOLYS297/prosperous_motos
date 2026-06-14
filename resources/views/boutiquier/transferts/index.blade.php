@@ -47,6 +47,9 @@
                             </td>
                             <td class="p-4 font-bold text-slate-800">
                                 {{ $demande->produit->nom ?? '—' }}
+                                @if($demande->produit && $demande->produit->reference)
+                                    <div class="text-xs text-slate-500 font-mono mt-1">{{ $demande->produit->reference }}</div>
+                                @endif
                             </td>
                             <td class="p-4 text-center font-bold text-slate-700">
                                 {{ $demande->quantite_demandee }}

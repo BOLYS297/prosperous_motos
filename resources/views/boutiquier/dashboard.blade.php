@@ -216,7 +216,10 @@
                     @endif
 
                     <div class="mb-4">
-                        <h4 class="text-base font-bold text-slate-800 truncate">{{ $produit->nom }}</h4>
+                        <h4 class="text-base font-bold text-slate-800 truncate">{{ $produit->nom }}@if($produit->reference) ({{ $produit->reference }})@endif</h4>
+                        @if($produit->reference)
+                            <p class="text-xs text-slate-500 font-mono bg-slate-50 inline-block px-2 py-1 rounded mt-1">{{ $produit->reference }}</p>
+                        @endif
                         <p class="text-blue-600 font-black text-xl mt-2"> <span class="product-price-label">{{ number_format($produit->prix_vente, 0, ',', ' ') }}</span> FCFA</p>
                         <p class="text-xs text-slate-500 mt-1">{{ $enStock ? 'En stock' : 'Rupture de stock' }}{{ $enStock ? ' • Qté: ' . $stock->quantite : '' }}</p>
                     </div>

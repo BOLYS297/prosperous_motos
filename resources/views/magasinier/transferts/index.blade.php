@@ -44,7 +44,7 @@
                                 {{ $demande->boutique->nom ?? '—' }}
                             </td>
                             <td class="p-4 font-bold text-slate-700">
-                                {{ $demande->produit->nom ?? '—' }}
+                                {{ $demande->produit->nom ?? '—' }}@if($demande->produit && $demande->produit->reference) ({{ $demande->produit->reference }})@endif
                             </td>
                             <td class="p-4 text-center">
                                 <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-black text-base border border-blue-100">
@@ -66,7 +66,7 @@
                             <td class="p-4 text-right">
                                 @if($demande->statut == 'en_attente')
                                     <div class="flex justify-end">
-                                        <button type="button" @click="$dispatch('open-expedier', { id: {{ $demande->id }}, bNom: '{{ addslashes($demande->boutique->nom) }}', pNom: '{{ addslashes($demande->produit->nom) }}', qty: {{ $demande->quantite_demandee }} })" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors shadow-md flex items-center">
+                                        <button type="button" @click="$dispatch('open-expedier', { id: {{ $demande->id }}, bNom: '{{ addslashes($demande->boutique->nom) }}', pNom: '{{ addslashes($demande->produit->nom) }}@if($demande->produit && $demande->produit->reference) ({{ addslashes($demande->produit->reference) }})@endif', qty: {{ $demande->quantite_demandee }} })" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors shadow-md flex items-center">
                                             <i class="ri-truck-line mr-1"></i> Expédier
                                         </button>
                                     </div>

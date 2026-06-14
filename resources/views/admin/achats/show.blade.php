@@ -63,7 +63,7 @@
                 @foreach($achat->lignes as $ligne)
                     <tr class="border-b border-white/20 hover:bg-white/30">
                         <td class="p-4 font-medium text-slate-800">
-                            {{ $ligne->produit ? $ligne->produit->nom : 'Produit inconnu' }}
+                            {{ $ligne->produit ? $ligne->produit->nom : 'Produit inconnu' }}@if($ligne->produit && $ligne->produit->reference) ({{ $ligne->produit->reference }})@endif
                         </td>
                         <td class="p-4 text-center text-slate-600 font-bold">
                             {{ $ligne->quantite }}

@@ -271,7 +271,7 @@
                     @foreach($topProducts as $product)
                         <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                             <td class="p-4 text-slate-800">
-                                {{ $product->produit_nom ?? 'Produit inconnu' }}
+                                {{ $product->produit_nom ?? 'Produit inconnu' }}@if($product->produit_reference) ({{ $product->produit_reference }})@endif
                             </td>
                             <td class="p-4 text-right font-semibold text-slate-900">
                                 {{ number_format($product->total_quantity, 0, ',', ' ') }}

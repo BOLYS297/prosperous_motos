@@ -37,7 +37,7 @@ class SalaryDeductionNotification extends Notification
         return (new MailMessage)
             ->subject($this->title)
             ->line($this->message)
-            ->line('Merci de vous connecter pour consulter le statut de la déduction.');
+            ->line('');
     }
 
     public function toArray($notifiable)

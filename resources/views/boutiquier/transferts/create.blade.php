@@ -33,15 +33,15 @@
 
         <div class="mb-6">
             <label class="block text-sm font-medium text-slate-700 mb-2">Produit à réapprovisionner <span class="text-red-500">*</span></label>
-            <select name="produit_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-medium" required>
-                <option value="">-- Sélectionnez un produit --</option>
-                @foreach($produits as $produit)
-                    <option value="{{ $produit->id }}">{{ $produit->nom }}</option>
-                @endforeach
-            </select>
+            <x-produit-search
+                id="produit_transfert"
+                fieldName="produit_id"
+                placeholder="Rechercher un produit..."
+                :produits="$produits"
+            />
         </div>
 
-        <div class="mb-8">
+        <div class="mb-6">
             <label class="block text-sm font-medium text-slate-700 mb-2">Quantité demandée <span class="text-red-500">*</span></label>
             <input type="number" name="quantite_demandee" min="1" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none text-2xl font-black text-slate-800" placeholder="Ex: 50" required>
         </div>

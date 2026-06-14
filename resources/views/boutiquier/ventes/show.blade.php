@@ -9,9 +9,18 @@
         <h2 class="text-3xl font-bold text-primary mb-2 tracking-tight">Ticket de caisse #{{ str_pad($vente->id, 4, '0', STR_PAD_LEFT) }}</h2>
         <p class="text-sm text-slate-500">{{ $vente->created_at->format('d/m/Y à H:i') }}</p>
     </div>
-    <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-        <i class="ri-printer-line mr-2"></i> Imprimer
-    </button>
+    <div class="flex gap-2">
+        <button onclick="window.print()" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center">
+            <i class="ri-printer-line mr-2"></i> Imprimer
+        </button>
+        <form action="{{ route('boutiquier.ventes.destroy', $vente) }}" method="POST" style="display: inline;">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex items-center" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette vente ?');">
+                <i class="ri-delete-bin-line mr-2"></i> Supprimer
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="receipt bg-white shadow rounded-2xl p-5 mx-auto">
@@ -30,10 +39,13 @@
 
     <div class="border-t border-slate-200 pt-3">
         @foreach($vente->lignes as $ligne)
-            <div class="flex justify-between items-center mb-2 text-xs text-slate-800">
+            <div class="flex justify-between items-center mb-3 text-xs text-slate-800">
                 <div>
                     <div class="font-semibold">{{ \Illuminate\Support\Str::limit($ligne->produit->nom ?? 'Produit', 18) }}</div>
-                    <div class="text-slate-500">{{ $ligne->quantite }} x {{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} FCFA</div>
+                    @if($ligne->produit && $ligne->produit->reference)
+                        <div class="text-slate-600 font-mono text-xs bg-slate-100 inline-block px-2 py-1 rounded mt-1">{{ $ligne->produit->reference }}</div>
+                    @endif
+                    <div class="text-slate-500 mt-1">{{ $ligne->quantite }} x {{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} FCFA</div>
                 </div>
                 <div class="text-right font-bold">
                     {{ number_format($ligne->quantite * $ligne->prix_unitaire, 0, ',', ' ') }}

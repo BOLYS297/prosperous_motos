@@ -13,7 +13,8 @@ class StockController extends Controller
         $q = trim($request->query('q', ''));
 
         $produits = \App\Models\Produit::when($q, function ($query) use ($q) {
-            $query->where('nom', 'like', "%{$q}%");
+            $query->where('nom', 'like', "%{$q}%")
+                ->orWhere('reference', 'like', "%{$q}%");
         })
             ->with(['stocks' => function ($query) use ($boutiqueId) {
                 $query->where('boutique_id', $boutiqueId);

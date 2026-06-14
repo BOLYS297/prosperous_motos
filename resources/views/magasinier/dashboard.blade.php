@@ -91,7 +91,7 @@
                         @foreach($recharge->lignes as $ligne)
                             <tr class="hover:bg-slate-50">
                                 <td class="px-4 py-3 border border-slate-200 text-sm">#{{ $recharge->id }}<br><span class="text-xs text-slate-500">{{ $recharge->created_at->format('d/m/Y') }}</span></td>
-                                <td class="px-4 py-3 border border-slate-200 text-sm">{{ $ligne->produit->nom ?? 'Produit supprimé' }}</td>
+                                <td class="px-4 py-3 border border-slate-200 text-sm">{{ $ligne->produit->nom ?? 'Produit supprimé' }}@if($ligne->produit && $ligne->produit->reference) ({{ $ligne->produit->reference }})@endif</td>
                                 <td class="px-4 py-3 border border-slate-200 text-sm">{{ $ligne->quantite_envoyee }}</td>
                                 <td class="px-4 py-3 border border-slate-200 text-sm">{{ $recharge->fournisseur?->nom ?? '-' }}</td>
                                 <td class="px-4 py-3 border border-slate-200 text-sm">

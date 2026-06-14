@@ -94,11 +94,12 @@ class AdminController extends Controller
 
         $topProducts = VenteLigne::select(
             'produits.nom as produit_nom',
+            'produits.reference as produit_reference',
             DB::raw('SUM(vente_lignes.quantite) as total_quantity'),
             DB::raw('SUM(vente_lignes.quantite * vente_lignes.prix_unitaire) as total_revenue')
         )
             ->join('produits', 'produits.id', '=', 'vente_lignes.produit_id')
-            ->groupBy('vente_lignes.produit_id', 'produits.nom')
+            ->groupBy('vente_lignes.produit_id', 'produits.nom', 'produits.reference')
             ->orderByDesc('total_quantity')
             ->take($topProductsCount)
             ->get();

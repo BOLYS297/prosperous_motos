@@ -73,14 +73,46 @@
         <div class="space-y-4 mb-8">
             <template x-for="(ligne, index) in lignes" :key="index">
                 <div class="flex items-end gap-4 p-4 bg-white/40 border border-slate-200 rounded-xl transition-all">
-                    <div class="flex-1">
+                    <div class="flex-1 relative">
                         <label class="block text-xs font-medium text-slate-500 mb-1">Produit</label>
-                        <select :name="`lignes[${index}][produit_id]`" x-model="ligne.produit_id" @change="updatePrice(index)" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm" required>
-                            <option value="">Sélectionner un produit</option>
-                            <template x-for="p in produits" :key="p.id">
-                                <option :value="p.id" x-text="p.nom"></option>
+                        <input
+                            type="text"
+                            :id="`produit_search_${index}`"
+                            placeholder="Rechercher un produit..."
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            autocomplete="off"
+                            @input.debounce.300="searchProduits($event.target.value, index)"
+                            @keydown.arrow-down="selectNextProduit(index)"
+                            @keydown.arrow-up="selectPrevProduit(index)"
+                            @keydown.enter="selectCurrentProduit(index)"
+                            @keydown.escape="closeProduitSuggestions(index)"
+                            required
+                        >
+                        <input
+                            type="hidden"
+                            :name="`lignes[${index}][produit_id]`"
+                            x-model="ligne.produit_id"
+                            @change="updatePrice(index)"
+                        >
+
+                        <div
+                            :id="`produit_suggestions_${index}`"
+                            x-show="ligne.showSuggestions && ligne.suggestions.length > 0"
+                            @click.outside="ligne.showSuggestions = false"
+                            class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto"
+                        >
+                            <template x-for="(item, itemIndex) in ligne.suggestions" :key="item.id">
+                                <div
+                                    :class="{ 'bg-blue-100': ligne.selectedIndex === itemIndex, 'hover:bg-slate-50': ligne.selectedIndex !== itemIndex }"
+                                    @click="selectProduitItem(item, index)"
+                                    @mouseenter="ligne.selectedIndex = itemIndex"
+                                    class="px-3 py-2 cursor-pointer border-b border-slate-100 last:border-b-0 text-xs text-slate-800"
+                                >
+                                    <div class="font-medium" x-text="item.nom"></div>
+                                    <div class="text-xs text-slate-500 font-mono" x-show="item.reference" x-text="item.reference"></div>
+                                </div>
                             </template>
-                        </select>
+                        </div>
                     </div>
                     <div class="w-32">
                         <label class="block text-xs font-medium text-slate-500 mb-1">Prix Unitaire</label>
@@ -122,7 +154,7 @@
             produits: @json($produits),
             statut: 'paye',
             lignes: [
-                { produit_id: '', prix_unitaire: 0, quantite: 1 }
+                { produit_id: '', prix_unitaire: 0, quantite: 1, showSuggestions: false, suggestions: [], selectedIndex: -1, searchValue: '' }
             ],
             init() {
                 // Initialiser la visibilité du champ debit_boutique_id au chargement
@@ -140,7 +172,7 @@
                 }
             },
             addLine() {
-                this.lignes.push({ produit_id: '', prix_unitaire: 0, quantite: 1 });
+                this.lignes.push({ produit_id: '', prix_unitaire: 0, quantite: 1, showSuggestions: false, suggestions: [], selectedIndex: -1, searchValue: '' });
             },
             removeLine(index) {
                 if(this.lignes.length > 1) {
@@ -153,6 +185,63 @@
                 if(produit) {
                     this.lignes[index].prix_unitaire = produit.prix_achat;
                 }
+            },
+            searchProduits(query, index) {
+                const ligne = this.lignes[index];
+                ligne.searchValue = query;
+
+                if (!query || query.length < 1) {
+                    ligne.suggestions = [];
+                    ligne.showSuggestions = false;
+                    return;
+                }
+
+                const queryLower = query.toLowerCase();
+                ligne.suggestions = this.produits.filter(p =>
+                    p.nom.toLowerCase().includes(queryLower) ||
+                    (p.reference && p.reference.toLowerCase().includes(queryLower))
+                ).map(p => ({
+                    id: p.id,
+                    nom: p.nom,
+                    reference: p.reference,
+                    prix_achat: p.prix_achat
+                })).slice(0, 20);
+
+                ligne.showSuggestions = ligne.suggestions.length > 0;
+                ligne.selectedIndex = -1;
+            },
+            selectNextProduit(index) {
+                const ligne = this.lignes[index];
+                if (ligne.showSuggestions) {
+                    ligne.selectedIndex = Math.min(ligne.selectedIndex + 1, ligne.suggestions.length - 1);
+                }
+            },
+            selectPrevProduit(index) {
+                const ligne = this.lignes[index];
+                if (ligne.showSuggestions) {
+                    ligne.selectedIndex = Math.max(ligne.selectedIndex - 1, 0);
+                }
+            },
+            selectCurrentProduit(index) {
+                const ligne = this.lignes[index];
+                if (ligne.selectedIndex >= 0 && ligne.suggestions[ligne.selectedIndex]) {
+                    this.selectProduitItem(ligne.suggestions[ligne.selectedIndex], index);
+                }
+            },
+            selectProduitItem(item, index) {
+                const ligne = this.lignes[index];
+                const input = document.getElementById(`produit_search_${index}`);
+                if (input) {
+                    input.value = item.nom + (item.reference ? ` (${item.reference})` : '');
+                }
+                ligne.produit_id = item.id;
+                ligne.prix_unitaire = item.prix_achat;
+                ligne.showSuggestions = false;
+                ligne.suggestions = [];
+                ligne.searchValue = '';
+            },
+            closeProduitSuggestions(index) {
+                this.lignes[index].showSuggestions = false;
             },
             calculateTotal() {
                 return this.lignes.reduce((total, ligne) => {

@@ -107,4 +107,153 @@ class VenteController extends Controller
 
         return view('boutiquier.ventes.show', compact('vente'));
     }
+
+    public function edit(Vente $vente)
+    {
+        $boutiqueId = Auth::user()->boutique_id;
+
+        if ($vente->boutique_id !== $boutiqueId) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que la vente peut être modifiée (max 24 heures après création)
+        if ($vente->created_at->addHours(24)->isPast()) {
+            return back()->with('error', 'Cette vente ne peut plus être modifiée (délai de 24h dépassé).');
+        }
+
+        $vente->load(['lignes.produit', 'user']);
+        $produits = \App\Models\Produit::all();
+
+        return view('boutiquier.ventes.edit', compact('vente', 'produits'));
+    }
+
+    public function update(Request $request, Vente $vente)
+    {
+        $boutiqueId = Auth::user()->boutique_id;
+
+        if ($vente->boutique_id !== $boutiqueId) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que la vente peut être modifiée
+        if ($vente->created_at->addHours(24)->isPast()) {
+            return back()->with('error', 'Cette vente ne peut plus être modifiée.');
+        }
+
+        $request->validate([
+            'produit_id' => 'required|exists:produits,id',
+            'quantite' => 'required|integer|min:1',
+            'is_grossiste' => 'nullable|boolean',
+            'grossiste_id' => 'nullable|exists:grossistes,id',
+        ]);
+
+        $produit = \App\Models\Produit::findOrFail($request->produit_id);
+        $isGrossiste = $request->boolean('is_grossiste');
+        $grossisteId = $isGrossiste ? $request->grossiste_id : null;
+
+        // Récupérer l'ancienne ligne de vente
+        $venteLigne = $vente->lignes()->first();
+        if (!$venteLigne) {
+            return back()->with('error', 'Ligne de vente introuvable.');
+        }
+
+        // Vérifier le stock
+        $oldQuantite = $venteLigne->quantite;
+        $newQuantite = $request->quantite;
+        $quantiteDiff = $newQuantite - $oldQuantite;
+
+        $stock = \App\Models\Stock::where('boutique_id', $boutiqueId)
+            ->where('produit_id', $request->produit_id)
+            ->first();
+
+        if (!$stock || $stock->quantite < $quantiteDiff) {
+            return back()->with('error', 'Stock insuffisant pour cette modification.');
+        }
+
+        $unitPrice = $produit->prix_vente;
+
+        if ($isGrossiste) {
+            if (!$grossisteId) {
+                return back()->with('error', 'Veuillez sélectionner un grossiste.');
+            }
+
+            $prixGrossiste = \App\Models\PrixGrossiste::where('grossiste_id', $grossisteId)
+                ->where('produit_id', $produit->id)
+                ->first();
+
+            if (!$prixGrossiste) {
+                return back()->with('error', 'Aucun tarif grossiste défini.');
+            }
+
+            $unitPrice = $prixGrossiste->prix_vente;
+        }
+
+        $total = $unitPrice * $newQuantite;
+
+        DB::transaction(function () use ($vente, $venteLigne, $stock, $quantiteDiff, $total, $unitPrice, $newQuantite, $produit, $grossisteId, $isGrossiste, $boutiqueId) {
+            // Mettre à jour la vente
+            $vente->update([
+                'montant_total' => $total,
+                'grossiste_id' => $grossisteId,
+            ]);
+
+            // Mettre à jour la ligne
+            $venteLigne->update([
+                'produit_id' => $produit->id,
+                'quantite' => $newQuantite,
+                'prix_unitaire' => $unitPrice,
+                'est_grossiste' => $isGrossiste,
+            ]);
+
+            // Ajuster le stock
+            $stock->decrement('quantite', $quantiteDiff);
+
+            // Mettre à jour le solde de la boutique
+            $boutique = \App\Models\Boutique::find($boutiqueId);
+            if ($boutique) {
+                $ancienTotal = $vente->getOriginal('montant_total');
+                $boutique->increment('solde', $total - $ancienTotal);
+            }
+        });
+
+        return back()->with('success', 'Vente modifiée avec succès !');
+    }
+
+    public function destroy(Vente $vente)
+    {
+        $boutiqueId = Auth::user()->boutique_id;
+
+        if ($vente->boutique_id !== $boutiqueId) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que la vente peut être supprimée (max 24 heures après création)
+        if ($vente->created_at->addHours(24)->isPast()) {
+            return back()->with('error', 'Cette vente ne peut plus être supprimée (délai de 24h dépassé).');
+        }
+
+        DB::transaction(function () use ($vente, $boutiqueId) {
+            // Restaurer le stock
+            foreach ($vente->lignes as $ligne) {
+                $stock = \App\Models\Stock::where('boutique_id', $boutiqueId)
+                    ->where('produit_id', $ligne->produit_id)
+                    ->first();
+
+                if ($stock) {
+                    $stock->increment('quantite', $ligne->quantite);
+                }
+            }
+
+            // Mettre à jour le solde de la boutique
+            $boutique = \App\Models\Boutique::find($boutiqueId);
+            if ($boutique) {
+                $boutique->decrement('solde', $vente->montant_total);
+            }
+
+            // Soft delete la vente
+            $vente->delete();
+        });
+
+        return redirect()->route('boutiquier.ventes.historique')->with('success', 'Vente supprimée avec succès !');
+    }
 }

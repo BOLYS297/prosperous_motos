@@ -53,12 +53,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-2">Produit concerné <span class="text-red-500">*</span></label>
-                    <select name="produit_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 outline-none" :required="type === 'perte'">
-                        <option value="">-- Sélectionner un produit --</option>
-                        @foreach($produits as $produit)
-                            <option value="{{ $produit->id }}" {{ old('produit_id', request()->query('produit_id')) == $produit->id ? 'selected' : '' }}>{{ $produit->nom }}</option>
-                        @endforeach
-                    </select>
+                    <x-produit-search
+                        id="produit_boutiquier"
+                        fieldName="produit_id"
+                        placeholder="Rechercher un produit..."
+                        :required="false"
+                        :produits="$produits"
+                        @change.debounce="$watch('type', () => $refs.produitBoutiquier?.setAttribute('required', type === 'perte'))"
+                    />
                 </div>
 
                 <div class="md:col-span-2">

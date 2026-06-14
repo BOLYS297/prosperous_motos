@@ -42,6 +42,12 @@
                 <label class="block text-sm font-medium text-slate-700 mb-2">Nom du produit <span class="text-red-500">*</span></label>
                 <input type="text" name="nom" value="{{ old('nom', $produit->nom ?? '') }}" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Ciment CPJ 35" required>
             </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Référence du produit (SKU/Code) <span class="text-slate-500 text-xs font-normal">(Optionnel)</span></label>
+                <input type="text" name="reference" value="{{ old('reference', $produit->reference ?? '') }}" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: SKU-00123456">
+                <p class="text-xs text-slate-500 mt-1"><i class="ri-information-line mr-1"></i> La référence doit être unique et sera utilisée pour identifier le produit dans tous les rapports</p>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

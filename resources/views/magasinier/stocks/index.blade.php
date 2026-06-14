@@ -25,6 +25,7 @@
                 <tr class="bg-white/40 border-b border-white/50 text-sm text-slate-600">
                     <th class="p-4 font-semibold w-16">Image</th>
                     <th class="p-4 font-semibold">Nom du Produit</th>
+                    <th class="p-4 font-semibold">Référence</th>
                     <th class="p-4 font-semibold text-center">Quantité en Stock</th>
                     <th class="p-4 font-semibold text-center">État</th>
                 </tr>
@@ -48,6 +49,13 @@
                         <td class="p-4 font-bold text-slate-800 text-lg">
                             {{ $produit->nom }}
                         </td>
+                        <td class="p-4 text-center text-slate-600">
+                            @if($produit->reference)
+                                <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded">{{ $produit->reference }}</span>
+                            @else
+                                <span class="text-slate-400">—</span>
+                            @endif
+                        </td>
                         <td class="p-4 text-center font-black text-xl text-slate-700">
                             {{ $quantite }}
                         </td>
@@ -63,7 +71,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="p-12 text-center text-slate-500">
+                        <td colspan="5" class="p-12 text-center text-slate-500">
                             Aucun produit n'est enregistré dans la base de données de l'entreprise.
                         </td>
                     </tr>

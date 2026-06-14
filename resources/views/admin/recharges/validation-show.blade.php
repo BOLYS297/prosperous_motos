@@ -100,7 +100,7 @@
                     <tbody>
                         @foreach($recharge->lignes as $ligne)
                             <tr class="border-b border-slate-200 hover:bg-slate-50">
-                                <td class="px-4 py-3">{{ $ligne->produit?->nom ?? 'Produit supprimé' }}</td>
+                                <td class="px-4 py-3">{{ $ligne->produit?->nom ?? 'Produit supprimé' }}@if($ligne->produit && $ligne->produit->reference) ({{ $ligne->produit->reference }})@endif</td>
                                 <td class="px-4 py-3 text-center">{{ $ligne->quantite_envoyee }}</td>
                                 <td class="px-4 py-3 text-center font-semibold">{{ $ligne->quantite_recue }}</td>
                                 <td class="px-4 py-3 text-center">

@@ -116,7 +116,7 @@
                                     <div class="font-semibold">#{{ $r->id }} <span class="text-xs text-slate-400">{{ $r->created_at->format('d/m') }}</span></div>
                                     <div class="text-xs text-slate-500">
                                         @foreach($r->lignes->take(2) as $l)
-                                            {{ $l->produit?->nom ?? 'Produit supprimé' }} × {{ $l->quantite_envoyee }}@if(! $loop->last), @endif
+                                            {{ $l->produit?->nom ?? 'Produit supprimé' }}@if($l->produit && $l->produit->reference) ({{ $l->produit->reference }})@endif × {{ $l->quantite_envoyee }}@if(! $loop->last), @endif
                                         @endforeach
                                         @if($r->lignes->count() > 2) ... @endif
                                     </div>

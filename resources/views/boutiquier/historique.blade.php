@@ -37,7 +37,7 @@
                     <th class="p-4 font-semibold">Produit(s)</th>
                     <th class="p-4 font-semibold text-center">Qté</th>
                     <th class="p-4 font-semibold text-right">Montant</th>
-                    <th class="p-4 font-semibold text-center">Ticket</th>
+                    <th class="p-4 font-semibold text-center">Actions</th>
                 </tr>
             </thead>
             <tbody class="text-sm">
@@ -49,6 +49,9 @@
                         </td>
                         <td class="p-4 font-bold text-slate-800">
                             {{ $ligne->produit->nom ?? '—' }}
+                            @if($ligne->produit && $ligne->produit->reference)
+                                <div class="text-xs text-slate-500 font-mono mt-1">{{ $ligne->produit->reference }}</div>
+                            @endif
                         </td>
                         <td class="p-4 text-center font-bold text-slate-700">
                             {{ $ligne->quantite }}
@@ -59,7 +62,7 @@
                         @if($loop->first)
                             <td class="p-4 text-center" rowspan="{{ $vente->lignes->count() }}">
                                 <a href="{{ route('boutiquier.ventes.show', $vente) }}" class="inline-flex items-center justify-center px-3 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                                    <i class="ri-printer-line mr-1"></i> Imprimer
+                                    <i class=""></i> Actions
                                 </a>
                             </td>
                         @endif

@@ -14,8 +14,9 @@ class ProduitController extends Controller
     {
         $q = trim($request->query('q', ''));
 
-        $produits = Produit::when($q, function ($query) use ($q) {
+        $produits = Produit::with(['stocks.boutique'])->when($q, function ($query) use ($q) {
             $query->where('nom', 'like', "%{$q}%")
+                ->orWhere('reference', 'like', "%{$q}%")
                 ->orWhere('prix_achat', 'like', "%{$q}%")
                 ->orWhere('prix_vente', 'like', "%{$q}%");
         })
@@ -35,6 +36,7 @@ class ProduitController extends Controller
     {
         $request->validate([
             'nom' => 'required|string|max:255',
+            'reference' => 'nullable|string|max:255',
             'prix_achat' => 'required|numeric|min:0',
             'prix_vente' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -44,7 +46,7 @@ class ProduitController extends Controller
             'prix_grossiste.*.prix_vente' => 'nullable|numeric|min:0',
         ]);
 
-        $data = $request->only(['nom', 'prix_achat', 'prix_vente']);
+        $data = $request->only(['nom', 'reference', 'prix_achat', 'prix_vente']);
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('produits', 'public');
@@ -94,6 +96,7 @@ class ProduitController extends Controller
     {
         $request->validate([
             'nom' => 'required|string|max:255',
+            'reference' => 'nullable|string|max:255',
             'prix_achat' => 'required|numeric|min:0',
             'prix_vente' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -103,7 +106,7 @@ class ProduitController extends Controller
             'prix_grossiste.*.prix_vente' => 'nullable|numeric|min:0',
         ]);
 
-        $data = $request->only(['nom', 'prix_achat', 'prix_vente']);
+        $data = $request->only(['nom', 'reference', 'prix_achat', 'prix_vente']);
 
         if ($request->hasFile('image')) {
             if ($produit->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($produit->image)) {
@@ -149,5 +152,24 @@ class ProduitController extends Controller
     {
         $produit->delete();
         return redirect()->route('admin.produits.index')->with('success', 'Produit supprimé du catalogue.');
+    }
+
+    public function stocks(\App\Models\Produit $produit)
+    {
+        $produit->load(['stocks.boutique']);
+
+        // Séparer les stocks par type de boutique
+        $stocks = $produit->stocks;
+        $stocksBoutiques = $stocks->filter(function ($stock) {
+            return $stock->boutique && $stock->boutique->type === 'boutique';
+        })->sortBy('boutique.nom');
+
+        $stocksMagasin = $stocks->filter(function ($stock) {
+            return $stock->boutique && $stock->boutique->type === 'magasin';
+        });
+
+        $totalStock = $stocks->sum('quantite');
+
+        return view('admin.produits.stocks', compact('produit', 'stocksBoutiques', 'stocksMagasin', 'totalStock'));
     }
 }

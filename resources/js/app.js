@@ -1,9 +1,13 @@
 import "./bootstrap";
 import "./offline-sync";
+import { initProduitSearch } from "./produit-search";
 
 import Alpine from "alpinejs";
 
 window.Alpine = Alpine;
+
+// Enregistrer les composants Alpine AVANT de démarrer Alpine
+initProduitSearch(Alpine);
 
 Alpine.start();
 
@@ -14,6 +18,8 @@ window.addEventListener("pwa-offline-status", (event) => {
 const PWA_PING_URL = "/pwa-ping";
 let pwaInstallPrompt = null;
 window.__pwaServerReachable = null;
+let __previousServerState = null;
+let __initialCheckDone = false;
 
 function updatePwaStatus({
     title,
@@ -54,6 +60,12 @@ function updatePwaStatus({
 }
 
 function setPwaOnlineStatus() {
+    const newState = "online";
+    if (__previousServerState === newState) {
+        return;
+    }
+
+    __previousServerState = newState;
     window.__pwaServerReachable = true;
     updatePwaStatus({
         title: "En ligne",
@@ -64,6 +76,12 @@ function setPwaOnlineStatus() {
 }
 
 function setPwaServerUnavailableStatus() {
+    const newState = "unavailable";
+    if (__previousServerState === newState) {
+        return;
+    }
+
+    __previousServerState = newState;
     window.__pwaServerReachable = false;
     updatePwaStatus({
         title: "Serveur indisponible",
@@ -75,6 +93,12 @@ function setPwaServerUnavailableStatus() {
 }
 
 function setPwaOfflineStatus() {
+    const newState = "offline";
+    if (__previousServerState === newState) {
+        return;
+    }
+
+    __previousServerState = newState;
     window.__pwaServerReachable = false;
     updatePwaStatus({
         title: "Hors ligne",
@@ -99,9 +123,9 @@ async function checkServerConnectivity() {
         });
 
         if (response.ok) {
-            const wasOffline = window.__pwaServerReachable !== true;
+            const wasUnavailable = window.__pwaServerReachable === false;
             setPwaOnlineStatus();
-            if (wasOffline) {
+            if (wasUnavailable && __initialCheckDone) {
                 window.dispatchEvent(new Event("pwa-server-reachable"));
             }
         } else {
@@ -110,6 +134,8 @@ async function checkServerConnectivity() {
     } catch (error) {
         setPwaServerUnavailableStatus();
     }
+
+    __initialCheckDone = true;
 }
 
 if ("serviceWorker" in navigator) {

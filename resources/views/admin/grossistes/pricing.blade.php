@@ -43,7 +43,7 @@
                             $prixExistant = $grossiste->prixProduits->firstWhere('produit_id', $produit->id);
                         @endphp
                         <tr>
-                            <td class="px-6 py-4 font-semibold">{{ $produit->nom }}</td>
+                            <td class="px-6 py-4 font-semibold">{{ $produit->nom }}@if($produit->reference) ({{ $produit->reference }})@endif</td>
                             <td class="px-6 py-4">
                                 <input type="hidden" name="prix[{{ $loop->index }}][produit_id]" value="{{ $produit->id }}">
                                 <input type="number" name="prix[{{ $loop->index }}][prix_achat]" step="0.01" min="0" class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" value="{{ $prixExistant?->prix_achat ?? $produit->prix_achat ?? '' }}" required>

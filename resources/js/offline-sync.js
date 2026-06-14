@@ -148,13 +148,6 @@ async function refreshOfflineQueueStatus() {
 
 async function fetchOfflineDataFromServer() {
     if (!navigator.onLine) {
-        dispatchOfflineStatus({
-            title: "Hors ligne",
-            message: "Utilisation du cache local pour les données.",
-            icon: "ri-database-line",
-            showInstall: false,
-            persistent: true,
-        });
         return null;
     }
 
@@ -175,25 +168,9 @@ async function fetchOfflineDataFromServer() {
         const payload = await response.json();
         await saveOfflineData(payload);
 
-        dispatchOfflineStatus({
-            title: "Données synchronisées",
-            message: "Le cache local a été mis à jour.",
-            icon: "ri-checkbox-circle-line",
-            showInstall: false,
-            persistent: true,
-        });
-
         return payload;
     } catch (error) {
         console.warn("Offline sync failed:", error);
-        dispatchOfflineStatus({
-            title: "Cache local actif",
-            message:
-                "Impossible de mettre à jour les données, utilisation du cache.",
-            icon: "ri-alert-line",
-            showInstall: false,
-            persistent: true,
-        });
         return null;
     }
 }
@@ -206,34 +183,12 @@ async function loadOfflineDataFromCache() {
             (payload.produits?.length || 0) > 0 ||
             (payload.stocks?.length || 0) > 0
         ) {
-            dispatchOfflineStatus({
-                title: "Données hors-ligne disponibles",
-                message:
-                    "Les informations sont chargées depuis le cache local.",
-                icon: "ri-database-line",
-                showInstall: false,
-                persistent: true,
-            });
             return payload;
         }
 
-        dispatchOfflineStatus({
-            title: "Aucune donnée hors-ligne",
-            message: "Connectez-vous en ligne pour récupérer les données.",
-            icon: "ri-information-line",
-            showInstall: false,
-            persistent: true,
-        });
         return { produits: [], stocks: [] };
     } catch (error) {
         console.warn("Failed to load offline data:", error);
-        dispatchOfflineStatus({
-            title: "Erreur cache local",
-            message: "Impossible de lire les données hors-ligne.",
-            icon: "ri-error-warning-line",
-            showInstall: false,
-            persistent: true,
-        });
         return { produits: [], stocks: [] };
     }
 }
@@ -370,6 +325,8 @@ export async function syncQueuedRequests() {
             return;
         }
 
+        let syncedCount = 0;
+
         for (const item of queue) {
             try {
                 const headers = {
@@ -392,19 +349,23 @@ export async function syncQueuedRequests() {
 
                 if (response.ok) {
                     await removeSyncQueueItem(item.id);
+                    syncedCount++;
                 }
             } catch (error) {
                 console.warn("Queued request sync failed:", error);
             }
         }
 
-        dispatchOfflineStatus({
-            title: "Synchronisation terminée",
-            message: "Les actions en attente ont été traitées.",
-            icon: "ri-refresh-line",
-            showInstall: false,
-            persistent: true,
-        });
+        if (syncedCount > 0) {
+            dispatchOfflineStatus({
+                title: "Synchronisation réussie",
+                message: `${syncedCount} action(s) ont été synchronisées.`,
+                icon: "ri-refresh-line",
+                showInstall: false,
+                persistent: false,
+            });
+        }
+
         await refreshOfflineQueueStatus();
     } catch (error) {
         console.warn("Failed to sync queued requests:", error);

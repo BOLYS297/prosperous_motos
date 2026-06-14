@@ -26,6 +26,10 @@ class AchatController extends Controller
                         })
                         ->orWhereHas('boutique', function ($query) use ($q) {
                             $query->where('nom', 'like', "%{$q}%");
+                        })
+                        ->orWhereHas('lignes.produit', function ($query) use ($q) {
+                            $query->where('nom', 'like', "%{$q}%")
+                                ->orWhere('reference', 'like', "%{$q}%");
                         });
                 });
             })
@@ -136,16 +140,8 @@ class AchatController extends Controller
                     $this->notifyBoutiquiers($destination, $montant_total, $achat);
                 }
             } elseif ($request->statut === 'dette') {
-                // Pour les dettes : notifier TOUS les boutiquiers de TOUTES les boutiques
-                $tousLesBootiquiers = \App\Models\User::where('role', 'boutiquier')->get();
-                if ($tousLesBootiquiers->isNotEmpty()) {
-                    \Illuminate\Support\Facades\Notification::send($tousLesBootiquiers, new \App\Notifications\AchatDepenseNotification(
-                        $destination ? $destination->nom : 'Magasin Central',
-                        $montant_total,
-                        $achat->id,
-                        Auth::user()->nom_utilisateur ?? 'Administrateur'
-                    ));
-                }
+                // Aucun avis de débit de caisse ne doit être envoyé aux boutiques
+                // pour un achat admin à crédit.
             }
 
             // If destination is a magasin, always create a Recharge record for magasinier validation

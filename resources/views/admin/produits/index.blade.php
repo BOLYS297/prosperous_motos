@@ -37,6 +37,8 @@
                 <tr class="bg-white/40 border-b border-white/50 text-sm text-slate-600">
                     <th class="p-4 font-semibold w-16">Image</th>
                     <th class="p-4 font-semibold">Nom du Produit</th>
+                    <th class="p-4 font-semibold">Référence</th>
+                    <th class="p-4 font-semibold">Stock total</th>
                     <th class="p-4 font-semibold">Prix d'Achat</th>
                     <th class="p-4 font-semibold">Prix de Vente</th>
                     <th class="p-4 font-semibold text-right">Actions</th>
@@ -56,6 +58,31 @@
                         </td>
                         <td class="p-4 font-bold text-slate-800">
                             {{ $produit->nom }}
+                        </td>
+                        <td class="p-4 text-slate-700 text-sm">
+                            @if($produit->reference)
+                                <code class="bg-slate-100 px-2 py-1 rounded text-xs">{{ $produit->reference }}</code>
+                            @else
+                                <span class="text-slate-400">—</span>
+                            @endif
+                        </td>
+                        <td class="p-4 text-slate-700">
+                            @php
+                                $magasinStock = $produit->stocks->where('boutique.type', 'magasin')->sum('quantite');
+                                $boutiqueStocks = $produit->stocks->where('boutique.type', 'boutique');
+                                $totalStock = $produit->stocks->sum('quantite');
+                            @endphp
+                            <div class="text-sm font-semibold">{{ $totalStock }} pcs</div>
+                            <div class="text-xs text-slate-500 mt-1">
+                                Magasin : {{ $magasinStock }}
+                            </div>
+                            @if($boutiqueStocks->isNotEmpty())
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    @foreach($boutiqueStocks as $stock)
+                                        <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px]">{{ $stock->boutique->nom ?? 'Boutique' }}: {{ $stock->quantite }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </td>
                         <td class="p-4">
                             <span class="px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
@@ -84,7 +111,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="p-12 text-center">
+                        <td colspan="7" class="p-12 text-center">
                             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 text-slate-400 mb-4">
                                 <i class="ri-price-tag-3-line text-3xl"></i>
                             </div>
