@@ -157,19 +157,6 @@ if ("serviceWorker" in navigator) {
             checkServerConnectivity,
             20000,
         );
-
-        window.__pwaInstallHintTimeout = setTimeout(() => {
-            if (!pwaInstallPrompt) {
-                updatePwaStatus({
-                    title: "Installer la PWA",
-                    message:
-                        "Si le bouton n'apparaît pas, utilisez le menu du navigateur (⋮ > Installer).",
-                    icon: "ri-information-line",
-                    showInstall: false,
-                    persistent: true,
-                });
-            }
-        }, 10000);
     });
 }
 
