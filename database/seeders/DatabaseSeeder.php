@@ -29,6 +29,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             AdminSeeder::class,
+            ProduitSeeder::class,
+            GrossisteSeeder::class,
+            PrixGrossisteSeeder::class,
+            StockBoutique1Seeder::class,
         ]);
     }
 }

@@ -194,18 +194,45 @@
         </div>
     </div>
 
+    <div class="mb-8">
+        <div class="glass-panel rounded-2xl p-6 bg-white shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Ticket en cours</h3>
+                    <p class="text-sm text-slate-500">Ajoutez plusieurs produits puis validez le ticket en une seule opération.</p>
+                </div>
+                <button id="clear-cart-button" type="button" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
+                    Vider le ticket
+                </button>
+            </div>
+
+            <div id="cart-empty" class="text-sm text-slate-500">Aucun produit ajouté au ticket.</div>
+            <div id="cart-items" class="space-y-3"></div>
+
+            <div class="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                <div class="text-sm text-slate-500">Total du ticket</div>
+                <div class="text-3xl font-black text-slate-900" id="cart-total">0 FCFA</div>
+            </div>
+
+            <form id="checkout-form" method="POST" action="{{ route('boutiquier.ventes.store') }}" class="mt-6">
+                @csrf
+                <input type="hidden" name="is_grossiste" id="checkout-is-grossiste" value="0">
+                <input type="hidden" name="grossiste_id" id="checkout-grossiste-id" value="">
+                <div id="checkout-line-inputs"></div>
+                <button id="checkout-button" type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Enregistrer le ticket
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         @forelse($produits as $produit)
             @php
                 $stock = $produit->stocks->first();
                 $enStock = $stock && $stock->quantite > 0;
             @endphp
-            <form method="POST" action="{{ route('boutiquier.ventes.store') }}" data-offline-sync="true" data-produit-id="{{ $produit->id }}" data-client-price="{{ $produit->prix_vente ?? 0 }}" data-in-stock="{{ $enStock ? 1 : 0 }}" class="product-card glass-panel rounded-2xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-lg {{ $enStock ? 'cursor-default' : 'opacity-50 cursor-not-allowed' }}">
-                @csrf
-                <input type="hidden" name="produit_id" value="{{ $produit->id }}">
-                <input type="hidden" name="is_grossiste" class="is-grossiste-input" value="0">
-                <input type="hidden" name="grossiste_id" class="grossiste-id-input" value="">
-
+            <div data-produit-id="{{ $produit->id }}" data-client-price="{{ $produit->prix_vente ?? 0 }}" data-in-stock="{{ $enStock ? 1 : 0 }}" class="product-card glass-panel rounded-2xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-lg {{ $enStock ? 'cursor-default' : 'opacity-50 cursor-not-allowed' }}">
                 <div class="flex-1">
                     @if($produit->image)
                         <img src="{{ asset('storage/' . $produit->image) }}" alt="{{ $produit->nom }}" class="object-cover rounded-2xl mb-4 w-50 h-40" style="max-height: 12rem;">
@@ -216,7 +243,7 @@
                     @endif
 
                     <div class="mb-4">
-                        <h4 class="text-base font-bold text-slate-800 truncate">{{ $produit->nom }}@if($produit->reference) ({{ $produit->reference }})@endif</h4>
+                        <h4 class="text-base font-bold text-slate-800">{{ $produit->nom }}@if($produit->reference) ({{ $produit->reference }})@endif</h4>
                         @if($produit->reference)
                             <p class="text-xs text-slate-500 font-mono bg-slate-50 inline-block px-2 py-1 rounded mt-1">{{ $produit->reference }}</p>
                         @endif
@@ -241,10 +268,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="submit-sale-button w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" {{ $enStock ? '' : 'disabled' }}>
-                    <i class="ri-check-double-line mr-2 text-xl"></i> Enregistrer la vente
+                <button type="button" class="add-to-cart-button submit-sale-button w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" {{ $enStock ? '' : 'disabled' }}>
+                    <i class="ri-shopping-cart-line mr-2 text-xl"></i> Ajouter au ticket
                 </button>
-            </form>
+            </div>
         @empty
             <div class="col-span-full glass-panel rounded-2xl p-12 text-center text-slate-500">
                 <i class="ri-shopping-bag-line text-5xl mb-3"></i>
@@ -272,6 +299,17 @@
         const grossisteSelect = document.getElementById('grossiste-select');
         const grossisteContainer = document.getElementById('grossiste-select-container');
         const productCards = document.querySelectorAll('.product-card');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const cartEmptyMessage = document.getElementById('cart-empty');
+        const cartTotalLabel = document.getElementById('cart-total');
+        const checkoutForm = document.getElementById('checkout-form');
+        const checkoutLineInputs = document.getElementById('checkout-line-inputs');
+        const checkoutButton = document.getElementById('checkout-button');
+        const checkoutIsGrossiste = document.getElementById('checkout-is-grossiste');
+        const checkoutGrossisteId = document.getElementById('checkout-grossiste-id');
+        const clearCartButton = document.getElementById('clear-cart-button');
+
+        let cart = {};
 
         function getSaleType() {
             return document.querySelector('input[name="sale_type"]:checked')?.value || 'client';
@@ -285,11 +323,59 @@
             return grossistes.find(g => String(g.id) === String(id));
         }
 
+        function updateCartDisplay() {
+            const entries = Object.values(cart);
+            const total = entries.reduce((sum, item) => sum + item.unitPrice * item.quantite, 0);
+            const saleType = getSaleType();
+            const noGrossiste = saleType === 'grossiste' && !getSelectedGrossisteId();
+
+            cartItemsContainer.innerHTML = '';
+            if (!entries.length) {
+                cartEmptyMessage.style.display = 'block';
+                checkoutButton.disabled = true;
+                checkoutLineInputs.innerHTML = '';
+            } else {
+                cartEmptyMessage.style.display = 'none';
+                checkoutButton.disabled = noGrossiste;
+                checkoutLineInputs.innerHTML = '';
+
+                entries.forEach((item, index) => {
+                    const line = document.createElement('div');
+                    line.className = 'rounded-2xl border border-slate-200 p-4 bg-slate-50 flex items-center justify-between gap-4';
+                    line.innerHTML = `
+                        <div>
+                            <div class="font-semibold text-slate-900">${item.nom}</div>
+                            <div class="text-xs text-slate-500">Qté: ${item.quantite} × ${new Intl.NumberFormat('fr-FR').format(item.unitPrice)} FCFA</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-slate-800 font-bold">${new Intl.NumberFormat('fr-FR').format(item.unitPrice * item.quantite)} FCFA</div>
+                            <button type="button" data-action="remove-cart-item" data-produit-id="${item.produitId}" class="mt-2 text-xs text-rose-600 hover:text-rose-800">Supprimer</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(line);
+
+                    const inputProduit = document.createElement('input');
+                    inputProduit.type = 'hidden';
+                    inputProduit.name = `lignes[${index}][produit_id]`;
+                    inputProduit.value = item.produitId;
+                    checkoutLineInputs.appendChild(inputProduit);
+
+                    const inputQuantite = document.createElement('input');
+                    inputQuantite.type = 'hidden';
+                    inputQuantite.name = `lignes[${index}][quantite]`;
+                    inputQuantite.value = item.quantite;
+                    checkoutLineInputs.appendChild(inputQuantite);
+                });
+            }
+
+            cartTotalLabel.textContent = new Intl.NumberFormat('fr-FR').format(total) + ' FCFA';
+            checkoutIsGrossiste.value = getSaleType() === 'grossiste' ? '1' : '0';
+            checkoutGrossisteId.value = getSaleType() === 'grossiste' ? getSelectedGrossisteId() : '';
+        }
+
         function updateCard(card) {
             const productId = card.dataset.produitId;
             const quantityInput = card.querySelector('.qty-input');
-            const isGrossisteInput = card.querySelector('.is-grossiste-input');
-            const grossisteIdInput = card.querySelector('.grossiste-id-input');
             const priceLabel = card.querySelector('.product-price-label');
             const totalPrice = card.querySelector('.total-price');
             const grossisteNote = card.querySelector('.grossiste-note');
@@ -325,8 +411,6 @@
                 grossisteNote.classList.add('hidden');
             }
 
-            isGrossisteInput.value = saleType === 'grossiste' ? '1' : '0';
-            grossisteIdInput.value = saleType === 'grossiste' ? selectedGrossisteId : '';
             priceLabel.textContent = new Intl.NumberFormat('fr-FR').format(unitPrice);
             totalPrice.textContent = new Intl.NumberFormat('fr-FR').format(unitPrice * quantity);
         }
@@ -337,6 +421,34 @@
                 grossisteContainer.style.display = saleType === 'grossiste' ? 'block' : 'none';
             }
             productCards.forEach(updateCard);
+            updateCartDisplay();
+        }
+
+        function addToCart(card) {
+            const productId = card.dataset.produitId;
+            const quantityInput = card.querySelector('.qty-input');
+            const priceLabel = card.querySelector('.product-price-label');
+            const quantity = parseInt(quantityInput.value, 10) || 1;
+            const unitPrice = Number(priceLabel.textContent.replace(/\s/g, '').replace('FCFA', '')) || parseFloat(card.dataset.clientPrice) || 0;
+            const productName = card.querySelector('h4')?.textContent.trim() || 'Produit';
+
+            if (!cart[productId]) {
+                cart[productId] = {
+                    produitId: productId,
+                    quantite: quantity,
+                    unitPrice,
+                    nom: productName,
+                };
+            } else {
+                cart[productId].quantite += quantity;
+            }
+
+            updateCartDisplay();
+        }
+
+        function clearCart() {
+            cart = {};
+            updateCartDisplay();
         }
 
         saleTypeInputs.forEach(input => input.addEventListener('change', updateAllCards));
@@ -346,12 +458,16 @@
 
         productCards.forEach(card => {
             const quantityInput = card.querySelector('.qty-input');
-            quantityInput.addEventListener('input', () => updateCard(card));
-
             const decreaseButton = card.querySelector('[data-action="decrease"]');
             const increaseButton = card.querySelector('[data-action="increase"]');
+            const addToCartButton = card.querySelector('.add-to-cart-button');
+
+            if (quantityInput) {
+                quantityInput.addEventListener('input', () => updateCard(card));
+            }
 
             const updateQuantity = (delta) => {
+                if (!quantityInput) return;
                 let currentValue = parseInt(quantityInput.value, 10) || 1;
                 const min = parseInt(quantityInput.getAttribute('min'), 10) || 1;
                 const max = parseInt(quantityInput.getAttribute('max'), 10) || currentValue;
@@ -372,6 +488,24 @@
                     event.preventDefault();
                     updateQuantity(1);
                 });
+            }
+
+            if (addToCartButton) {
+                addToCartButton.addEventListener('click', () => addToCart(card));
+            }
+        });
+
+        if (clearCartButton) {
+            clearCartButton.addEventListener('click', clearCart);
+        }
+
+        cartItemsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-action="remove-cart-item"]');
+            if (!button) return;
+            const productId = button.dataset.produitId;
+            if (cart[productId]) {
+                delete cart[productId];
+                updateCartDisplay();
             }
         });
 

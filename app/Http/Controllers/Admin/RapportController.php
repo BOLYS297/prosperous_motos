@@ -43,10 +43,30 @@ class RapportController extends Controller
         // Flux de trésorerie (Bénéfice estimé global)
         $cashFlow = $totalVentes - ($totalDepenses + $totalAchats);
 
-        // Ventes par boutique
+        // Ventes par boutique et totaux de stock
         $ventesParBoutique = Boutique::withSum(['ventes' => function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate]);
-        }], 'montant_total')->get();
+        }], 'montant_total')
+            ->withSum('stocks', 'quantite')
+            ->get();
+
+        $stockData = Stock::select(
+            'boutique_id',
+            DB::raw('SUM(stocks.quantite) as total_quantite'),
+            DB::raw('SUM(stocks.quantite * produits.prix_achat) as total_capital'),
+            DB::raw('COUNT(DISTINCT stocks.produit_id) as total_produits')
+        )
+            ->leftJoin('produits', 'stocks.produit_id', '=', 'produits.id')
+            ->groupBy('boutique_id')
+            ->get()
+            ->keyBy('boutique_id');
+
+        $ventesParBoutique->each(function ($boutique) use ($stockData) {
+            $stock = $stockData->get($boutique->id);
+            $boutique->stock_total_quantite = $stock ? (int)$stock->total_quantite : 0;
+            $boutique->stock_total_capital = $stock ? (int)$stock->total_capital : 0;
+            $boutique->stock_total_produits = $stock ? (int)$stock->total_produits : 0;
+        });
 
         // Statistiques mensuelles pour le graphique (6 derniers mois)
         $statsMensuelles = [];

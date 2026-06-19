@@ -13,63 +13,89 @@ class VenteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'produit_id' => 'required|exists:produits,id',
-            'quantite' => 'required|integer|min:1',
+            'lignes' => 'required_without:produit_id|array|min:1',
+            'lignes.*.produit_id' => 'required_with:lignes|exists:produits,id',
+            'lignes.*.quantite' => 'required_with:lignes|integer|min:1',
+            'produit_id' => 'required_without:lignes|exists:produits,id',
+            'quantite' => 'required_without:lignes|integer|min:1',
             'is_grossiste' => 'nullable|boolean',
             'grossiste_id' => 'nullable|exists:grossistes,id',
         ]);
 
         $user = Auth::user();
         $boutiqueId = $user->boutique_id;
-
-        $stock = \App\Models\Stock::where('boutique_id', $boutiqueId)
-            ->where('produit_id', $request->produit_id)
-            ->first();
-
-        if (!$stock || $stock->quantite < $request->quantite) {
-            return back()->with('error', 'Stock insuffisant pour ce produit.');
-        }
-
-        $produit = \App\Models\Produit::findOrFail($request->produit_id);
         $isGrossiste = $request->boolean('is_grossiste');
         $grossisteId = $isGrossiste ? $request->grossiste_id : null;
-        $unitPrice = $produit->prix_vente;
 
-        if ($isGrossiste) {
-            if (!$grossisteId) {
-                return back()->with('error', 'Veuillez sélectionner un grossiste pour cette vente.');
-            }
-
-            $prixGrossiste = \App\Models\PrixGrossiste::where('grossiste_id', $grossisteId)
-                ->where('produit_id', $produit->id)
-                ->first();
-
-            if (!$prixGrossiste) {
-                return back()->with('error', 'Aucun tarif grossiste défini pour ce produit.');
-            }
-
-            $unitPrice = $prixGrossiste->prix_vente;
+        $lignesData = [];
+        if ($request->filled('lignes')) {
+            $lignesData = $request->input('lignes');
+        } else {
+            $lignesData = [
+                [
+                    'produit_id' => $request->produit_id,
+                    'quantite' => $request->quantite,
+                ],
+            ];
         }
 
-        $total = $unitPrice * $request->quantite;
+        if ($isGrossiste && !$grossisteId) {
+            return back()->with('error', 'Veuillez sélectionner un grossiste pour cette vente.');
+        }
 
-        DB::transaction(function () use ($request, $user, $boutiqueId, $produit, $total, $unitPrice, $stock, $grossisteId, $isGrossiste) {
+        DB::transaction(function () use ($lignesData, $user, $boutiqueId, $isGrossiste, $grossisteId, $request) {
+            $total = 0;
             $vente = \App\Models\Vente::create([
                 'boutique_id' => $boutiqueId,
                 'user_id' => $user->id,
-                'montant_total' => $total,
+                'montant_total' => 0,
                 'grossiste_id' => $grossisteId,
             ]);
 
-            \App\Models\VenteLigne::create([
-                'vente_id' => $vente->id,
-                'produit_id' => $produit->id,
-                'quantite' => $request->quantite,
-                'prix_unitaire' => $unitPrice,
-                'est_grossiste' => $isGrossiste,
-            ]);
+            foreach ($lignesData as $ligneData) {
+                $produit = \App\Models\Produit::findOrFail($ligneData['produit_id']);
+                $quantite = intval($ligneData['quantite']);
+                if ($quantite < 1) {
+                    throw new \Exception('Quantité invalide pour le produit ' . $produit->nom);
+                }
 
-            $stock->decrement('quantite', $request->quantite);
+                $stock = \App\Models\Stock::where('boutique_id', $boutiqueId)
+                    ->where('produit_id', $produit->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$stock || $stock->quantite < $quantite) {
+                    throw new \Exception('Stock insuffisant pour le produit ' . $produit->nom . '.');
+                }
+
+                $unitPrice = $produit->prix_vente;
+                if ($isGrossiste) {
+                    $prixGrossiste = \App\Models\PrixGrossiste::where('grossiste_id', $grossisteId)
+                        ->where('produit_id', $produit->id)
+                        ->first();
+
+                    if (!$prixGrossiste) {
+                        throw new \Exception('Aucun tarif grossiste défini pour le produit ' . $produit->nom . '.');
+                    }
+
+                    $unitPrice = $prixGrossiste->prix_vente;
+                }
+
+                $lineTotal = $unitPrice * $quantite;
+                $total += $lineTotal;
+
+                \App\Models\VenteLigne::create([
+                    'vente_id' => $vente->id,
+                    'produit_id' => $produit->id,
+                    'quantite' => $quantite,
+                    'prix_unitaire' => $unitPrice,
+                    'est_grossiste' => $isGrossiste,
+                ]);
+
+                $stock->decrement('quantite', $quantite);
+            }
+
+            $vente->update(['montant_total' => $total]);
 
             $boutique = \App\Models\Boutique::find($boutiqueId);
             if ($boutique) {
@@ -77,7 +103,8 @@ class VenteController extends Controller
             }
         });
 
-        return back()->with('success', 'Vente enregistrée ! ' . $request->quantite . 'x ' . $produit->nom . ' = ' . number_format($total, 0, ',', ' ') . ' FCFA');
+        $message = 'Ticket enregistré avec succès !';
+        return back()->with('success', $message);
     }
 
     public function historique()

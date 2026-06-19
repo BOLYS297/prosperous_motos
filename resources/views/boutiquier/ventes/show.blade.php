@@ -41,7 +41,7 @@
         @foreach($vente->lignes as $ligne)
             <div class="flex justify-between items-center mb-3 text-xs text-slate-800">
                 <div>
-                    <div class="font-semibold">{{ \Illuminate\Support\Str::limit($ligne->produit->nom ?? 'Produit', 18) }}</div>
+                    <div class="font-semibold">{{ $ligne->produit->nom ?? 'Produit', 18 }}</div>
                     @if($ligne->produit && $ligne->produit->reference)
                         <div class="text-slate-600 font-mono text-xs bg-slate-100 inline-block px-2 py-1 rounded mt-1">{{ $ligne->produit->reference }}</div>
                     @endif

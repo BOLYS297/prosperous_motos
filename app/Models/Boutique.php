@@ -13,6 +13,11 @@ class Boutique extends Model
         return $this->hasMany(Vente::class);
     }
 
+    public function stocks()
+    {
+        return $this->hasMany(Stock::class);
+    }
+
     public function paiements()
     {
         return $this->hasMany(AchatPaiement::class);

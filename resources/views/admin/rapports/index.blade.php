@@ -189,6 +189,41 @@
     </div>
 </div>
 
+<div class="glass-panel rounded-2xl p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-slate-800 flex items-center"><i class="ri-box-fill mr-2 text-emerald-500"></i> Stock total et capital par Boutique</h3>
+            <p class="text-sm text-slate-500">Valeur du stock au prix d'achat, par boutique.</p>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="border-b border-slate-200 text-slate-500">
+                    <th class="py-3 font-semibold">Boutique</th>
+                    <th class="py-3 font-semibold text-right">Produits différents</th>
+                    <th class="py-3 font-semibold text-right">Quantité en stock</th>
+                    <th class="py-3 font-semibold text-right">Capital stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($ventesParBoutique as $boutique)
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td class="py-3 font-medium text-slate-700">{{ $boutique->nom }}</td>
+                        <td class="py-3 text-right font-bold text-slate-800">{{ number_format($boutique->stock_total_produits ?? 0, 0, ',', ' ') }}</td>
+                        <td class="py-3 text-right font-bold text-slate-800">{{ number_format($boutique->stock_total_quantite ?? 0, 0, ',', ' ') }}</td>
+                        <td class="py-3 text-right font-bold text-slate-800">{{ number_format($boutique->stock_total_capital ?? 0, 0, ',', ' ') }} FCFA</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="py-4 text-center text-slate-500">Aucune boutique ou stock disponible.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
     <div class="glass-panel rounded-2xl p-6">
         <div class="flex items-center justify-between mb-6">
